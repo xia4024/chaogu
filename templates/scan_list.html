@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}仪表盘 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<h2>仪表盘</h2>
+<p class="subtitle">策略执行概览与扫描记录</p>
+
+{% if stats %}
+<div class="dashboard-grid">
+  <div class="dash-card accent-blue">
+    <div class="dash-card-icon">&#x1F4C5;</div>
+    <div class="dash-card-value">{{ "%.0f%%" | format(stats.weekly_win_rate * 100) }}</div>
+    <div class="dash-card-label">本周胜率</div>
+    <div class="dash-card-sub">{{ stats.weekly_wins }}/{{ stats.weekly_total }} 笔</div>
+  </div>
+  <div class="dash-card accent-green">
+    <div class="dash-card-icon">&#x1F4C8;</div>
+    <div class="dash-card-value">{{ "%.0f%%" | format(stats.d7_win_rate * 100) }}</div>
+    <div class="dash-card-label">近7日胜率</div>
+    <div class="dash-card-sub">{{ stats.d7_wins }}/{{ stats.d7_total }} 笔</div>
+  </div>
+  <div class="dash-card accent-purple">
+    <div class="dash-card-icon">&#x1F4CA;</div>
+    <div class="dash-card-value">{{ stats.all_settled }}</div>
+    <div class="dash-card-label">历史已结算</div>
+    <div class="dash-card-sub">共 {{ stats.all_total }} 条信号，均盈亏 {{ "%.2f%%" | format(stats.all_avg_pnl * 100) if stats.all_avg_pnl else "-" }}</div>
+  </div>
+  <div class="dash-card accent-yellow">
+    <div class="dash-card-icon">&#x1F4E6;</div>
+    <div class="dash-card-value">{{ stats.holdings_count }}</div>
+    <div class="dash-card-label">持仓标的</div>
+    <div class="dash-card-sub">
+    {% if stats.latest_scan %}
+    最近扫描：{{ stats.latest_scan.executed_at.strftime('%m-%d %H:%M') if stats.latest_scan.executed_at else '-' }}
+    {% else %}暂无扫描{% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if scans %}
+<div class="scan-list">
+  {% for scan in scans %}
+  <a href="/scan/{{ scan.id }}" class="scan-card">
+    <div class="scan-card-left">
+      <div class="scan-date">{{ scan.scan_date }} <span class="scan-time">{{ scan.executed_at.strftime('%H:%M:%S') if scan.executed_at else '' }}</span></div>
+      <div class="scan-meta">
+        基准 {{ scan.benchmark_symbol }}
+        <span class="dot">·</span>
+        候选 {{ scan.candidate_count }}
+        <span class="dot">·</span>
+        过滤 {{ scan.filtered_count }}
+      </div>
+    </div>
+    <div class="scan-card-right">
+      <span class="badge badge-{{ scan.market_regime }}">{{ regime_label(scan.market_regime) }}</span>
+      <span class="plan-count">{{ scan.plan_count }} 条计划</span>
+      <span class="arrow">&rarr;</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">📋</div>
+  <h3>暂无扫描记录</h3>
+  <p>执行一次扫描后，记录将显示在这里</p>
+</div>
+{% endif %}
+{% endblock %}

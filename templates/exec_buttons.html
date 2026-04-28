@@ -1,0 +1,16 @@
+{% if plan.executed is none %}
+<form method="POST" action="/scan/plan/{{ plan.id }}/confirm" class="exec-form">
+  <input type="number" name="fill_price" step="0.001" value="{{ plan.entry_price }}" class="exec-price" title="实际成交价">
+  <div class="exec-btns">
+    <button type="submit" name="action" value="execute" class="btn-exec btn-exec-ok" title="标记为已执行">&#10003;</button>
+    <button type="submit" name="action" value="skip" class="btn-exec btn-exec-skip" title="标记为跳过">&#10007;</button>
+  </div>
+</form>
+{% elif plan.executed == 1 %}
+<span class="exec-badge exec-ok">已执行</span>
+{% if plan.actual_fill_price %}
+<span class="exec-fill">{{ "%.3f" | format(plan.actual_fill_price) }}</span>
+{% endif %}
+{% else %}
+<span class="exec-badge exec-skip">跳过</span>
+{% endif %}

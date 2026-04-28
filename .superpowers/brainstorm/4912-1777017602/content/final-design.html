@@ -1,0 +1,101 @@
+<h2>最终设计确认</h2>
+<p class="subtitle">深色仪表盘风格 · Flask + MySQL 架构</p>
+
+<div class="section">
+  <h3>技术栈</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+    <div class="mock-content" style="text-align:center;padding:14px;background:#1e293b;border-radius:8px;color:#e2e8f0;">
+      <span style="font-size:20px;">🐍</span><br/>
+      <b>Python 3.11</b><br/>
+      <span style="font-size:11px;color:#94a3b8;">后端 + 扫描引擎</span>
+    </div>
+    <div class="mock-content" style="text-align:center;padding:14px;background:#1e293b;border-radius:8px;color:#e2e8f0;">
+      <span style="font-size:20px;">⚡</span><br/>
+      <b>Flask + Jinja2</b><br/>
+      <span style="font-size:11px;color:#94a3b8;">Web 服务 + 模板渲染</span>
+    </div>
+    <div class="mock-content" style="text-align:center;padding:14px;background:#1e293b;border-radius:8px;color:#e2e8f0;">
+      <span style="font-size:20px;">🗄️</span><br/>
+      <b>MySQL 8.0</b><br/>
+      <span style="font-size:11px;color:#94a3b8;">统一数据存储</span>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>交付清单</h3>
+  <table style="width:100%;font-size:13px;border-collapse:collapse;">
+    <tr style="background:#f3f4f6;">
+      <th style="padding:8px 12px;text-align:left;border:1px solid #e5e7eb;">#</th>
+      <th style="padding:8px 12px;text-align:left;border:1px solid #e5e7eb;">模块</th>
+      <th style="padding:8px 12px;text-align:left;border:1px solid #e5e7eb;">内容</th>
+      <th style="padding:8px 12px;text-align:left;border:1px solid #e5e7eb;">文件</th>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">1</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">config.toml 扩展</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">新增 [mysql] 段</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">config.py + config.toml</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">2</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">MySQL 连接 + 建表</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">连接池、自动建表、CRUD</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">db.py</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">3</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">MySQL 持久化</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">实现 ScanPersistence 协议</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">mysql_persistence.py</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">4</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">Scanner 改造</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">从 MySQL 读持仓，fallback config.toml</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">engine.py / config.py</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">5</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">Flask Web 应用</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">3 路由 + Jinja2 模板</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">web.py + templates/</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">6</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">前端样式</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">深色仪表盘风格 CSS</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">static/style.css</td>
+    </tr>
+    <tr>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">7</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">依赖更新</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">pymysql + flask</td>
+      <td style="padding:8px 12px;border:1px solid #e5e7eb;">pyproject.toml</td>
+    </tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>页面路由</h3>
+  <div style="background:#1e293b;color:#e2e8f0;padding:16px;border-radius:10px;font-size:13px;font-family:monospace;">
+    GET  /              → scan_list.html    (扫描记录列表，按日期倒序)<br/>
+    GET  /scan/&lt;id&gt;     → scan_detail.html  (单次扫描详情 + 交易计划表格)<br/>
+    GET  /holdings      → holdings.html     (持仓列表 + 新增/编辑表单)<br/>
+    POST /holdings/new  → holdings.html     (新增持仓)<br/>
+    POST /holdings/&lt;id&gt;/edit  → 重定向     (编辑持仓)<br/>
+    POST /holdings/&lt;id&gt;/delete → 重定向   (删除持仓)
+  </div>
+</div>
+
+<div class="section">
+  <h3>启停命令</h3>
+  <div style="background:#1e293b;color:#e2e8f0;padding:16px;border-radius:10px;font-size:13px;font-family:monospace;">
+    # 启动 Web 服务（默认 5000 端口）<br/>
+    python web.py<br/><br/>
+    # 指定端口<br/>
+    python web.py --port 8080<br/><br/>
+    # 定时扫描（不变，新增 MySQL 持久化）<br/>
+    python run_scheduled.py --config config.toml --data-source auto --send-email
+  </div>
+</div>

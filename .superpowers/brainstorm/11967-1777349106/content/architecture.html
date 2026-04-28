@@ -1,0 +1,98 @@
+<h2>Chaogu-Alert 功能演进架构</h2>
+<p class="subtitle">4 个子系统及其数据关系</p>
+
+<div style="display:flex; flex-direction:column; gap:32px; margin-top:24px;">
+
+  <!-- System diagram -->
+  <div class="mockup">
+    <div class="mockup-header">系统数据流全景</div>
+    <div class="mockup-body">
+      <div style="display:flex; justify-content:space-around; align-items:flex-start; gap:16px; flex-wrap:wrap;">
+
+        <!-- Module 1: Strategy Tracking -->
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; flex:1; min-width:180px; text-align:center;">
+          <div style="font-size:28px; margin-bottom:8px;">📊</div>
+          <h3 style="margin:0 0 8px 0; font-size:14px;">1. 策略绩效追踪</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">每日自动统计<br>各策略盈亏/胜率/持仓</p>
+          <div style="margin-top:10px; background:#0f172a; border-radius:6px; padding:6px; font-size:10px; color:#38bdf8;">
+            strategy_performance<br>trade_outcomes
+          </div>
+          <div style="margin-top:6px; font-size:10px; color:#34d399;">✅ 表已建</div>
+        </div>
+
+        <!-- Module 2: Trade Recording -->
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; flex:1; min-width:180px; text-align:center;">
+          <div style="font-size:28px; margin-bottom:8px;">📸</div>
+          <h3 style="margin:0 0 8px 0; font-size:14px;">2. 实盘交易记录</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">OCR识别券商截图<br>手动补录 + 日期标注</p>
+          <div style="margin-top:10px; background:#0f172a; border-radius:6px; padding:6px; font-size:10px; color:#38bdf8;">
+            actual_trades<br>trade_images
+          </div>
+          <div style="margin-top:6px; font-size:10px; color:#fbbf24;">🆕 待建</div>
+        </div>
+
+        <!-- Module 3: Comparison -->
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; flex:1; min-width:180px; text-align:center;">
+          <div style="font-size:28px; margin-bottom:8px;">⚖️</div>
+          <h3 style="margin:0 0 8px 0; font-size:14px;">3. 策略 vs 实盘对比</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">同一标的上<br>策略信号 vs 实际执行<br>偏差分析</p>
+          <div style="margin-top:10px; background:#0f172a; border-radius:6px; padding:6px; font-size:10px; color:#a78bfa;">
+            消费 1 + 2 的数据
+          </div>
+          <div style="margin-top:6px; font-size:10px; color:#fbbf24;">🆕 待建</div>
+        </div>
+
+        <!-- Module 4: Multi-Account -->
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:10px; padding:20px; flex:1; min-width:180px; text-align:center;">
+          <div style="font-size:28px; margin-bottom:8px;">👥</div>
+          <h3 style="margin:0 0 8px 0; font-size:14px;">4. 多账号架构</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">account_id 隔离<br>持仓/交易/策略独立<br>支持多券商</p>
+          <div style="margin-top:10px; background:#0f172a; border-radius:6px; padding:6px; font-size:10px; color:#38bdf8;">
+            accounts<br>account_holdings
+          </div>
+          <div style="margin-top:6px; font-size:10px; color:#fbbf24;">🆕 待建</div>
+        </div>
+
+      </div>
+
+      <!-- Arrows -->
+      <div style="display:flex; justify-content:center; gap:48px; margin-top:20px; font-size:12px; color:#64748b;">
+        <span>策略信号 → 绩效统计 → 每日更新</span>
+        <span style="color:#334155;">|</span>
+        <span>OCR截图 → 交易记录 → 对比分析</span>
+        <span style="color:#334155;">|</span>
+        <span>account_id 贯穿所有数据表</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="mockup">
+    <div class="mockup-header">建议实施顺序</div>
+    <div class="mockup-body">
+      <div style="display:flex; gap:0; align-items:stretch;">
+        <div style="background:#1e293b; border-left:3px solid #38bdf8; padding:16px; flex:1;">
+          <div style="font-size:11px; color:#64748b;">Phase 1</div>
+          <h3 style="margin:4px 0; font-size:14px;">多账号底层改造</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">accounts 表 + account_id 外键<br>影响所有现有表，先行改造</p>
+        </div>
+        <div style="background:#1e293b; border-left:3px solid #34d399; padding:16px; flex:1;">
+          <div style="font-size:11px; color:#64748b;">Phase 2A</div>
+          <h3 style="margin:4px 0; font-size:14px;">策略绩效追踪</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">完善已有表 + 每日 job<br>独立于实盘记录</p>
+        </div>
+        <div style="background:#1e293b; border-left:3px solid #fbbf24; padding:16px; flex:1;">
+          <div style="font-size:11px; color:#64748b;">Phase 2B</div>
+          <h3 style="margin:4px 0; font-size:14px;">实盘交易记录</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">OCR 引擎 + 图片管理<br>可并行于 2A</p>
+        </div>
+        <div style="background:#1e293b; border-left:3px solid #a78bfa; padding:16px; flex:1;">
+          <div style="font-size:11px; color:#64748b;">Phase 3</div>
+          <h3 style="margin:4px 0; font-size:14px;">对比分析页面</h3>
+          <p style="font-size:11px; color:#94a3b8; margin:0;">消费 Phase 2 的全部数据<br>可视化差距</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

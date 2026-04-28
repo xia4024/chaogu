@@ -1,0 +1,129 @@
+[app]
+reports_dir = "reports"
+data_source = "demo"
+data_sources = ["akshare", "sina"]
+# Optional: write one JSON line per completed scan for later review/persistence.
+# scan_journal_path = "reports/scan_history.jsonl"
+
+[akshare]
+adjust = "qfq"
+period = "daily"
+history_buffer_days = 420
+use_spot_name_lookup = true
+intraday_period = "1"
+cache_dir = "cache/akshare"
+request_log_path = "logs/upstream_requests.jsonl"
+min_request_interval_seconds = 1.2
+spot_cache_ttl_seconds = 3600
+history_cache_ttl_seconds = 43200
+intraday_cache_ttl_seconds = 600
+
+[schedule]
+timezone = "Asia/Shanghai"
+market_close_time = "14:35"
+enforce_after_close = true
+skip_non_trading_day = true
+logs_dir = "logs"
+task_name = "ChaoguAlertDaily"
+
+[email]
+enabled = false
+smtp_host = "smtp.example.com"
+smtp_port = 465
+username = "${SMTP_USERNAME}"
+password = "${SMTP_PASSWORD}"
+from_addr = "${SMTP_FROM_ADDR}"
+to_addrs = ["${SMTP_TO_ADDR}"]
+use_ssl = true
+subject_prefix = "[A-share Alert]"
+
+[risk]
+capital = 100000
+cash_buffer_pct = 0.15
+max_positions = 4
+max_position_pct = 0.25
+max_sector_position_pct = 0.30
+risk_per_trade_pct = 0.01
+lot_size = 100
+min_score = 68
+etf_commission = 5.0
+stock_commission = 5.0
+stock_commission_rate = 0.00025
+atr_period = 14
+atr_stop_multiplier = 2.0
+trailing_stop_enabled = true
+circuit_breaker_enabled = true
+circuit_breaker_weekly_pct = 0.06
+circuit_breaker_daily_pct = 0.03
+
+[universe]
+benchmark_symbol = "510300"
+min_listing_days = 120
+broad_etfs = ["510300", "510500", "515080", "159915", "588000"]
+sector_etfs = ["512880", "516160", "512660", "512010", "159852", "159995", "159819", "159825", "520500"]
+
+# Optional custom groups for future strategies.
+# [universe.groups]
+# growth = ["159915", "588000", "159819"]
+
+# -- Multi-Account (replaces [portfolio]) --
+[[accounts]]
+id = 1
+name = "招商证券"
+broker = "zhaoshang"
+type = "real"
+initial_capital = 120000
+
+[accounts.portfolio]
+available_cash = 20000
+
+[[accounts.portfolio.holdings]]
+symbol = "510300"
+shares = 3000
+cost_basis = 4.68
+min_t_trade_pct = 0.10
+max_t_trade_pct = 0.20
+
+[[accounts.portfolio.holdings]]
+symbol = "512880"
+shares = 5000
+cost_basis = 1.52
+min_t_trade_pct = 0.10
+max_t_trade_pct = 0.20
+
+# -- Legacy portfolio (used if [[accounts]] not configured) --
+[portfolio]
+available_cash = 0
+
+[mysql]
+enabled = false
+host = "127.0.0.1"
+port = 3306
+user = "root"
+password = ""
+database = "claude"
+
+[strategy.etf_trend]
+enabled = true
+ma_fast = 20
+ma_slow = 60
+min_return_20 = 0.02
+min_volume_ratio = 0.95
+stop_loss_pct = 0.05
+
+[strategy.etf_rotation]
+enabled = true
+lookback = 20
+top_n = 2
+min_return_20 = 0.04
+benchmark_filter_period = 60
+stop_loss_pct = 0.06
+
+[strategy.t_trade]
+enabled = true
+min_intraday_pullback_pct = 0.008
+min_intraday_rebound_pct = 0.008
+min_distance_from_vwap_pct = 0.003
+max_daily_range_pct = 0.06
+require_trend_ma = 20
+add_on_market_regime = "risk_on"

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chaogu-alert"
+version = "0.1.0"
+description = "A-share email alert quant MVP"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+akshare = ["akshare>=1.18.55"]
+web = ["flask>=3.0", "pymysql>=1.1"]
+ocr = ["paddleocr>=2.8", "paddlepaddle"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}策略表现 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<h2>策略胜率分析</h2>
+<p class="subtitle">基于做T信号的执行结果，用于策略持续优化</p>
+
+{% if performances %}
+<div class="section">
+  <h3>策略概览</h3>
+  <div class="perf-grid">
+    {% for p in performances %}
+    <div class="perf-card">
+      <div class="perf-card-header">
+        <span class="badge badge-{{ 'risk_on' if p.win_rate >= 0.5 else 'risk_off' }}">{{ "%.0f%%" | format(p.win_rate * 100) }}</span>
+        <span class="perf-strategy">{{ strategy_label(p.strategy_id) }}</span>
+      </div>
+      <div class="perf-stats">
+        <div class="perf-stat">
+          <span class="perf-stat-value">{{ p.total_signals }}</span>
+          <span class="perf-stat-label">总信号</span>
+        </div>
+        <div class="perf-stat win">
+          <span class="perf-stat-value">{{ p.wins }}</span>
+          <span class="perf-stat-label">盈利</span>
+        </div>
+        <div class="perf-stat loss">
+          <span class="perf-stat-value">{{ p.losses }}</span>
+          <span class="perf-stat-label">亏损</span>
+        </div>
+        <div class="perf-stat">
+          <span class="perf-stat-value">{{ p.pending }}</span>
+          <span class="perf-stat-label">待结算</span>
+        </div>
+      </div>
+      <div class="perf-detail">
+        <div>平均盈亏: <strong class="{{ 'text-green' if p.avg_pnl_pct > 0 else 'text-red' }}">{{ "%.2f%%" | format(p.avg_pnl_pct * 100) }}</strong></div>
+        <div>累计盈亏: <strong class="{{ 'text-green' if p.total_pnl_pct > 0 else 'text-red' }}">{{ "%.2f%%" | format(p.total_pnl_pct * 100) }}</strong></div>
+        <div>平均评分: <strong>{{ "%.1f" | format(p.avg_score) }}</strong></div>
+        <div>持仓天数: <strong>{{ "%.0f"|format(p.avg_holding_days) }}天</strong></div>
+        <div>最大回撤: <strong>{{ "%.1f"|format(p.max_drawdown_pct) }}%</strong></div>
+        <div>夏普比率: <strong>{{ "%.2f"|format(p.sharpe_ratio) if p.sharpe_ratio else "-" }}</strong></div>
+      </div>
+      <div class="perf-bar-wrap">
+        <div class="perf-bar">
+          <div class="perf-bar-win" style="width:{{ (p.win_rate * 100) | round(1) }}%"></div>
+        </div>
+      </div>
+      {% set weekly = p.weekly_pnl_json | from_json if p.weekly_pnl_json else [] %}
+      {% if weekly %}
+      <div class="weekly-pnl" style="margin-top:8px;font-size:11px;">
+        <span style="color:var(--text-dim);">近4周: </span>
+        {% for w in weekly[:4] %}
+        <span class="{{ 'text-green' if w.pnl > 0 else 'text-red' }}" style="margin-right:8px;">{{ "%+.0f"|format(w.pnl) }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="section">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px">
+    <h3 style="margin-bottom:0">最近交易记录</h3>
+    <form method="POST" action="/performance/settle" style="margin-left:auto">
+      <button type="submit" class="btn-primary" style="font-size:13px;padding:8px 16px">结算待定记录</button>
+    </form>
+  </div>
+  {% if outcomes %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th><th>标的</th><th>策略</th><th>操作</th>
+          <th>入场价</th><th>止损</th><th>止盈</th>
+          <th>结果</th><th>盈亏%</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in outcomes %}
+        <tr>
+          <td>{{ o.scan_date }}</td>
+          <td><strong>{{ o.symbol }}</strong><br/><span class="dim">{{ o.name }}</span></td>
+          <td>{{ strategy_label(o.strategy_id) }}</td>
+          <td><span class="badge-action {{ o.action }}">{{ action_label(o.action) }}</span></td>
+          <td>{{ "%.3f" | format(o.entry_price) }}</td>
+          <td class="stop-loss">{{ "%.3f" | format(o.stop_loss) }}</td>
+          <td>{{ "%.3f" | format(o.take_profit) }}</td>
+          <td>
+            {% if o.outcome == 'win' %}<span style="color:var(--green)">盈利</span>
+            {% elif o.outcome == 'loss' %}<span style="color:var(--red)">亏损</span>
+            {% elif o.outcome == 'pending' %}<span style="color:var(--yellow)">待结算</span>
+            {% else %}{{ o.outcome }}{% endif %}
+          </td>
+          <td class="{{ 'text-green' if o.pnl_pct and o.pnl_pct > 0 else 'text-red' if o.pnl_pct and o.pnl_pct < 0 else '' }}">
+            {{ ("%.2f%%" | format(o.pnl_pct * 100)) if o.pnl_pct is not none else "-" }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-text">暂无交易记录。当出现做T信号并完成扫描后，记录将出现在这里。</p>
+  {% endif %}
+</div>
+{% endblock %}

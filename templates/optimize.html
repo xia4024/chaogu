@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}策略优化 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<h2>策略优化建议</h2>
+<p class="subtitle">基于历史做T信号执行结果，自动分析并生成参数优化建议（样本量 >= 5 时生效）</p>
+
+{% if performances %}
+<div class="section">
+  <h3>当前策略表现</h3>
+  <div class="perf-grid">
+    {% for p in performances %}
+    <div class="perf-card">
+      <div class="perf-card-header">
+        <span class="badge badge-{{ 'risk_on' if p.win_rate >= 0.5 else 'risk_off' }}">{{ "%.0f%%" | format(p.win_rate * 100) }}</span>
+        <span class="perf-strategy">{{ strategy_label(p.strategy_id) }}</span>
+      </div>
+      <div class="perf-stats">
+        <div class="perf-stat">
+          <span class="perf-stat-value">{{ p.total_signals }}</span>
+          <span class="perf-stat-label">总信号</span>
+        </div>
+        <div class="perf-stat win">
+          <span class="perf-stat-value">{{ p.wins }}</span>
+          <span class="perf-stat-label">盈利</span>
+        </div>
+        <div class="perf-stat loss">
+          <span class="perf-stat-value">{{ p.losses }}</span>
+          <span class="perf-stat-label">亏损</span>
+        </div>
+        <div class="perf-stat">
+          <span class="perf-stat-value">{{ "%.2f%%" | format(p.avg_pnl_pct * 100) if p.avg_pnl_pct else "-" }}</span>
+          <span class="perf-stat-label">均盈亏</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% if suggestions %}
+<div class="section">
+  <h3>优化建议</h3>
+  <div class="opt-list">
+    {% for sg in suggestions %}
+    <div class="opt-card">
+      <div class="opt-header">
+        <span class="opt-strategy">{{ strategy_label(sg.strategy_id) }}</span>
+        <span>胜率 {{ "%.0f%%" | format(sg.win_rate * 100) }}</span>
+        <span>样本 {{ sg.total }}</span>
+        <span>均盈亏 {{ "%.2f%%" | format(sg.avg_pnl * 100) if sg.avg_pnl else "-" }}</span>
+        {% if sg.score_gap is defined %}
+        <span>评分区分度 {{ "%.1f" | format(sg.score_gap) }}</span>
+        {% endif %}
+      </div>
+      {% for item in sg.items %}
+      <div class="opt-item">
+        <div class="opt-param">{{ item.param }}</div>
+        <div class="opt-current">当前值: {{ item.current }}</div>
+        <div class="opt-suggestion">{{ item.suggestion }}</div>
+        <div class="opt-impact">预期影响: {{ item.impact }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% elif performances %}
+<div class="empty-state small">
+  <div class="empty-icon">&#x1f4ca;</div>
+  <h3>暂无优化建议</h3>
+  <p>需要至少 5 条已结算的做T记录才能生成优化建议。继续扫描积累数据。</p>
+</div>
+{% endif %}
+
+<div class="help-box mt-section">
+  <h4>优化逻辑说明</h4>
+  <ul>
+    <li><strong>评分区分度</strong>：盈利信号的平均得分 减去 亏损信号的平均得分。差值越大，说明评分越能区分好坏信号</li>
+    <li><strong>回撤阈值</strong>：日内回撤幅度要求。提高阈值 = 等更深回撤才入场 = 更少信号更高质量</li>
+    <li><strong>振幅限制</strong>：标的当日振幅上限。放宽限制可覆盖更多高波动标的</li>
+    <li><strong>盈亏比</strong>：平均单笔盈利 / 平均单笔亏损。建议 >= 2:1 以保证正期望</li>
+    <li>优化建议仅针对<strong>做T信号</strong>，基于已结算的真实盈亏数据</li>
+  </ul>
+</div>
+{% endblock %}

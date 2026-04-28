@@ -1,0 +1,149 @@
+<h2>策略 vs 实盘对比页面设计</h2>
+<p class="subtitle">核心目标：发现交易行为缺陷，缩小策略信号与实际执行的差距</p>
+
+<div class="mockup" style="margin-bottom:24px;">
+  <div class="mockup-header">对比仪表盘 — 顶部概览</div>
+  <div class="mockup-body">
+    <div style="display:flex; gap:12px; margin-bottom:16px;">
+      <div style="flex:1; background:#0f172a; border-radius:8px; padding:16px; text-align:center;">
+        <div style="font-size:24px; font-weight:700; color:#38bdf8;">+12,450</div>
+        <div style="font-size:11px; color:#64748b;">策略累计盈亏</div>
+      </div>
+      <div style="flex:1; background:#0f172a; border-radius:8px; padding:16px; text-align:center;">
+        <div style="font-size:24px; font-weight:700; color:#f87171;">-3,820</div>
+        <div style="font-size:11px; color:#64748b;">实盘累计盈亏</div>
+      </div>
+      <div style="flex:1; background:#0f172a; border-radius:8px; padding:16px; text-align:center;">
+        <div style="font-size:24px; font-weight:700; color:#fbbf24;">16,270</div>
+        <div style="font-size:11px; color:#64748b;">执行差距（策略 - 实盘）</div>
+      </div>
+      <div style="flex:1; background:#0f172a; border-radius:8px; padding:16px; text-align:center;">
+        <div style="font-size:24px; font-weight:700; color:#a78bfa;">64%</div>
+        <div style="font-size:11px; color:#64748b;">信号执行率</div>
+      </div>
+    </div>
+
+    <div class="placeholder" style="text-align:center; padding:24px; color:#64748b;">
+      📈 策略 PnL（蓝）vs 实盘 PnL（红）双线叠加曲线图
+    </div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">对比明细表 — 核心分析工具</div>
+    <div class="mockup-body">
+      <table style="width:100%; font-size:11px; color:#94a3b8; border-collapse:collapse;">
+        <thead>
+          <tr style="color:#64748b; text-align:left;">
+            <th style="padding:6px;">日期</th><th style="padding:6px;">标的</th>
+            <th style="padding:6px;">策略信号</th><th style="padding:6px;">实盘操作</th>
+            <th style="padding:6px;">偏差</th><th style="padding:6px;">影响</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-top:1px solid #1e293b; background:rgba(52,211,153,0.06);">
+            <td style="padding:6px;">04-25</td><td style="padding:6px; color:#e2e8f0;">510300</td>
+            <td style="padding:6px; color:#34d399;">✅ 买入 10,000</td>
+            <td style="padding:6px; color:#34d399;">✅ 买入 10,000</td>
+            <td style="padding:6px; color:#34d399;">完全一致</td>
+            <td style="padding:6px; color:#64748b;">—</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b; background:rgba(248,113,113,0.06);">
+            <td style="padding:6px;">04-22</td><td style="padding:6px; color:#e2e8f0;">159915</td>
+            <td style="padding:6px; color:#34d399;">✅ 买入 5,000</td>
+            <td style="padding:6px; color:#f87171;">❌ 未操作</td>
+            <td style="padding:6px; color:#f87171;">漏单</td>
+            <td style="padding:6px; color:#f87171;">-650</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b; background:rgba(248,113,113,0.06);">
+            <td style="padding:6px;">04-20</td><td style="padding:6px; color:#e2e8f0;">512880</td>
+            <td style="padding:6px; color:#f87171;">🛑 止损卖出</td>
+            <td style="padding:6px; color:#fbbf24;">⏸ 持有未动</td>
+            <td style="padding:6px; color:#f87171;">不止损</td>
+            <td style="padding:6px; color:#f87171;">-1,240</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b; background:rgba(248,113,113,0.04);">
+            <td style="padding:6px;">04-18</td><td style="padding:6px; color:#e2e8f0;">588000</td>
+            <td style="padding:6px; color:#64748b;">无信号</td>
+            <td style="padding:6px; color:#fbbf24;">⚠ 自主买入 3,000</td>
+            <td style="padding:6px; color:#fbbf24;">过度交易</td>
+            <td style="padding:6px; color:#f87171;">-320</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b; background:rgba(52,211,153,0.06);">
+            <td style="padding:6px;">04-15</td><td style="padding:6px; color:#e2e8f0;">515080</td>
+            <td style="padding:6px; color:#34d399;">🎯 止盈卖出</td>
+            <td style="padding:6px; color:#f87171;">❌ 提前卖出</td>
+            <td style="padding:6px; color:#f87171;">过早止盈</td>
+            <td style="padding:6px; color:#f87171;">-380</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+        <span style="background:rgba(52,211,153,0.15); color:#34d399; padding:2px 8px; border-radius:10px; font-size:11px;">✅ 一致 32</span>
+        <span style="background:rgba(248,113,113,0.15); color:#f87171; padding:2px 8px; border-radius:10px; font-size:11px;">❌ 漏单 12</span>
+        <span style="background:rgba(248,113,113,0.15); color:#f87171; padding:2px 8px; border-radius:10px; font-size:11px;">🛑 不止损 5</span>
+        <span style="background:rgba(251,191,36,0.15); color:#fbbf24; padding:2px 8px; border-radius:10px; font-size:11px;">⚠ 过度交易 8</span>
+        <span style="background:rgba(248,113,113,0.15); color:#f87171; padding:2px 8px; border-radius:10px; font-size:11px;">⏰ 过早止盈 6</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">行为缺陷雷达图</div>
+    <div class="mockup-body">
+      <div class="placeholder" style="text-align:center; padding:40px 20px; color:#64748b;">
+        <div style="font-size:14px; margin-bottom:16px;">🎯 交易行为分析</div>
+        <table style="width:100%; font-size:11px; color:#94a3b8;">
+          <tr style="color:#64748b; text-align:left;">
+            <th style="padding:4px;">缺陷类型</th><th style="padding:4px;">次数</th><th style="padding:4px;">累计损失</th>
+          </tr>
+          <tr style="border-top:1px solid #1e293b;">
+            <td style="padding:4px; color:#f87171;">漏单（有信号未跟）</td>
+            <td style="padding:4px;">12</td><td style="padding:4px; color:#f87171;">-4,680</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b;">
+            <td style="padding:4px; color:#f87171;">不止损（止损信号未执行）</td>
+            <td style="padding:4px;">5</td><td style="padding:4px; color:#f87171;">-8,250</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b;">
+            <td style="padding:4px; color:#fbbf24;">过度交易（无信号开仓）</td>
+            <td style="padding:4px;">8</td><td style="padding:4px; color:#f87171;">-2,100</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b;">
+            <td style="padding:4px; color:#f87171;">过早止盈（未到止盈位卖出）</td>
+            <td style="padding:4px;">6</td><td style="padding:4px; color:#f87171;">-1,240</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b; font-weight:600;">
+            <td style="padding:4px; color:#e2e8f0;">合计</td>
+            <td style="padding:4px;">31</td><td style="padding:4px; color:#f87171;">-16,270</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:24px;">
+  <div class="mockup-header">自动匹配逻辑</div>
+  <div class="mockup-body">
+    <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+      <div>🔗 <strong style="color:#e2e8f0;">匹配规则：</strong>
+        <span>同日期 + 同标的 → 策略信号与实盘交易自动配对</span>
+      </div>
+      <div>📋 <strong style="color:#e2e8f0;">偏差分类：</strong></div>
+      <table style="width:100%; font-size:11px; color:#94a3b8; margin-top:6px;">
+        <tr style="color:#64748b; text-align:left;">
+          <th style="padding:4px;">偏差</th><th style="padding:4px;">判定条件</th><th style="padding:4px;">标签</th>
+        </tr>
+        <tr><td style="padding:4px;">完全一致</td><td style="padding:4px;">策略有信号 + 实盘同日同向操作</td><td style="padding:4px; color:#34d399;">✅ match</td></tr>
+        <tr><td style="padding:4px;">漏单</td><td style="padding:4px;">策略有买入信号 + 实盘同日无操作</td><td style="padding:4px; color:#f87171;">❌ miss</td></tr>
+        <tr><td style="padding:4px;">不止损</td><td style="padding:4px;">策略有卖出信号 + 实盘同日未卖出</td><td style="padding:4px; color:#f87171;">🛑 hold_loss</td></tr>
+        <tr><td style="padding:4px;">过度交易</td><td style="padding:4px;">策略无信号 + 实盘有买入操作</td><td style="padding:4px; color:#fbbf24;">⚠ overtrade</td></tr>
+        <tr><td style="padding:4px;">过早止盈</td><td style="padding:4px;">策略止盈位未到 + 实盘已卖出</td><td style="padding:4px; color:#f87171;">⏰ early_exit</td></tr>
+        <tr><td style="padding:4px;">追高/追低</td><td style="padding:4px;">实盘成交价显著偏离策略建议价 (±2%)</td><td style="padding:4px; color:#fbbf24;">⚠ slippage</td></tr>
+      </table>
+    </div>
+  </div>
+</div>

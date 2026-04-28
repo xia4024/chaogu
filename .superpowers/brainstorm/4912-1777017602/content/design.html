@@ -1,0 +1,107 @@
+<h2>数据库设计和页面结构</h2>
+<p class="subtitle">MySQL 表设计 + Flask 前端页面规划</p>
+
+<div class="section">
+  <h3>MySQL 表设计（3 张表）</h3>
+
+  <div class="mockup">
+    <div class="mockup-header">scan_reports — 每次扫描记录</div>
+    <div class="mockup-body">
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr style="background:#f3f4f6;">
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">字段</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">类型</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">说明</th>
+        </tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">id</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT AUTO_INCREMENT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">主键</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">scan_date</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">DATE</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">扫描日期</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">benchmark_symbol</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">VARCHAR(20)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">基准标的</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">market_regime</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">VARCHAR(20)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">市场状态 risk_on/risk_off</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">candidate_count</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">候选信号数</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">filtered_count</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">过滤标的数</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">created_at</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">DATETIME</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">入库时间</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:16px;">
+    <div class="mockup-header">trade_plans — 交易计划（一对多关联 scan_reports）</div>
+    <div class="mockup-body">
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr style="background:#f3f4f6;">
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">字段</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">类型</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">说明</th>
+        </tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">id</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT AUTO_INCREMENT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">主键</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">report_id</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">关联 scan_reports.id</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">strategy_id</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">VARCHAR(50)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">策略ID</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">signal_group</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">VARCHAR(20)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">open / t_trade</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">action</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">VARCHAR(10)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">buy / sell</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">symbol / name / score</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">-</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">标的、名称、评分</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">entry_price / stop_loss / take_profit</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">DECIMAL(10,3)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">参考价/止损/止盈</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">suggested_shares / suggested_value</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT / DECIMAL(12,2)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">建议股数/金额</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">reasons / tags</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">TEXT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">JSON 格式存储</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="mockup" style="margin-top:16px;">
+    <div class="mockup-header">holdings — 持仓管理（独立表，与扫描无外键关联）</div>
+    <div class="mockup-body">
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr style="background:#f3f4f6;">
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">字段</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">类型</th>
+          <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">说明</th>
+        </tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">id</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT AUTO_INCREMENT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">主键</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">symbol</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">VARCHAR(20) UNIQUE</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">ETF 代码</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">shares</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">INT</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">持仓股数</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">cost_basis</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">DECIMAL(10,3)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">成本价</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">min_t_trade_pct</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">DECIMAL(4,3)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">最小T比例</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">max_t_trade_pct</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">DECIMAL(4,3)</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">最大T比例</td></tr>
+        <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">updated_at</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">DATETIME</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">更新时间</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>前端页面规划</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+
+    <div class="card" data-choice="page-scan-list">
+      <div class="card-body">
+        <h3>扫描记录列表</h3>
+        <p>首页。按日期倒序展示所有扫描记录，卡片式布局，每条显示日期、市场状态、信号统计摘要。点击进入详情</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="page-scan-detail">
+      <div class="card-body">
+        <h3>扫描详情</h3>
+        <p>展示单次扫描的全部交易计划，分"开仓信号"和"做T信号"两个区域，表格展示含评分、价格、建议仓位、触发原因</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="page-holdings">
+      <div class="card-body">
+        <h3>持仓管理</h3>
+        <p>列表展示当前所有持仓，支持新增/编辑/删除。每行显示代码、名称、股数、成本价、T比例。附填写说明</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="section">
+  <h3>导航结构</h3>
+  <div style="display:flex;gap:16px;align-items:center;background:#f3f4f6;padding:12px;border-radius:8px;">
+    <span style="font-weight:700;font-size:16px;">Chaogu-Alert</span>
+    <span style="color:#888;">|</span>
+    <span style="padding:8px 14px;background:#fff;border-radius:6px;font-weight:600;">扫描记录</span>
+    <span style="padding:8px 14px;border-radius:6px;">持仓管理</span>
+  </div>
+  <p style="font-size:13px;color:#888;margin-top:8px;">顶栏导航 + 两页面切换</p>
+</div>

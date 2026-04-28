@@ -1,0 +1,60 @@
+<h2>需求总览：Chaogu-Alert 系统升级</h2>
+<p class="subtitle">三大模块的职责和关系</p>
+
+<div class="section">
+  <h3>模块一：MySQL 持久化</h3>
+  <p>将 ScannerEngine 每次扫描结果写入 MySQL（替代/补充现有 JSONL 持久化）。数据库：192.168.1.137，库名 claude</p>
+</div>
+
+<div class="section">
+  <h3>模块二：扫描结果浏览</h3>
+  <p>前端页面浏览历史扫描记录、交易计划、策略运行结果。时尚现代风格</p>
+</div>
+
+<div class="section">
+  <h3>模块三：持仓录入管理</h3>
+  <p>前端页面录入和管理持仓数据（symbol、shares、cost_basis 等），替代手动编辑 config.toml 中的 [[portfolio.holdings]]</p>
+</div>
+
+<div class="section">
+  <h3>整体架构</h3>
+  <div class="mockup">
+    <div class="mockup-header">系统架构流</div>
+    <div class="mockup-body">
+      <div style="display:flex;flex-direction:column;gap:16px;padding:8px;">
+        <div class="mock-content" style="text-align:center;background:#e8f4fd;padding:12px;border-radius:8px;">
+          run_scan.py / run_scheduled.py
+          <div style="font-size:12px;color:#666;margin-top:4px;">Python 扫描入口（不变）</div>
+        </div>
+        <div style="text-align:center;color:#888;">↓</div>
+        <div class="mock-content" style="text-align:center;background:#e8f4fd;padding:12px;border-radius:8px;">
+          ScannerEngine.scan() → ScanReport
+          <div style="font-size:12px;color:#666;margin-top:4px;">核心引擎（不变）</div>
+        </div>
+        <div style="text-align:center;color:#888;">↓  ↗ ↘</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="mock-content" style="text-align:center;background:#f0fdf4;padding:10px;border-radius:8px;font-size:13px;">
+            JSONL 文件<br/><span style="color:#888;">（保留）</span>
+          </div>
+          <div class="mock-content" style="text-align:center;background:#fefce8;padding:10px;border-radius:8px;font-size:13px;">
+            MySQL 数据库<br/><span style="color:#888;">（新增）</span>
+          </div>
+        </div>
+        <div style="text-align:center;color:#888;">↓</div>
+        <div class="mock-content" style="text-align:center;background:#faf5ff;padding:12px;border-radius:8px;">
+          Flask Web 服务
+          <div style="font-size:12px;color:#666;margin-top:4px;">API + 前端页面</div>
+        </div>
+        <div style="text-align:center;color:#888;">↓</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="mock-content" style="text-align:center;background:#fff1f2;padding:10px;border-radius:8px;font-size:13px;">
+            扫描记录浏览页<br/><span style="color:#888;">历史数据查询</span>
+          </div>
+          <div class="mock-content" style="text-align:center;background:#fff1f2;padding:10px;border-radius:8px;font-size:13px;">
+            持仓管理页<br/><span style="color:#888;">录入/编辑持仓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

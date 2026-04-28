@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}持仓管理 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<h2>持仓管理</h2>
+<p class="subtitle">管理你的 ETF 持仓，数据将用于做T信号生成</p>
+
+<div class="holdings-layout">
+  <div class="holdings-list-panel">
+    <h3>当前持仓</h3>
+    {% if holdings %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>代码</th><th>名称</th><th>股数</th><th>成本价</th><th>现价</th><th>市值</th><th>盈亏%</th><th>盈亏额</th><th>最小T</th><th>最大T</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% set ns = namespace(total_cost=0, total_value=0) %}
+          {% for h in holdings %}
+          {% set cost = h.cost_basis * h.shares %}
+          {% set value = h.latest_price * h.shares if h.latest_price else cost %}
+          {% set pnl = value - cost if h.latest_price else 0 %}
+          {% set pnl_pct = ((h.latest_price - h.cost_basis) / h.cost_basis * 100) if h.latest_price and h.cost_basis else 0 %}
+          {% set ns.total_cost = ns.total_cost + cost %}
+          {% set ns.total_value = ns.total_value + value %}
+          <tr>
+            <td><strong>{{ h.symbol }}</strong></td>
+            <td>{{ h.name or "" }}</td>
+            <td>{{ h.shares }}</td>
+            <td>{{ "%.3f" | format(h.cost_basis) }}</td>
+            <td>{{ ("%.3f" | format(h.latest_price)) if h.latest_price else "-" }}</td>
+            <td>{{ "%.0f" | format(value) if h.latest_price else "-" }}</td>
+            <td class="{{ 'text-green' if pnl_pct > 0 else 'text-red' if pnl_pct < 0 else '' }}">
+              {{ ("%+.2f%%" | format(pnl_pct)) if h.latest_price else "-" }}
+            </td>
+            <td class="{{ 'text-green' if pnl > 0 else 'text-red' if pnl < 0 else '' }}">
+              {{ ("%+.0f" | format(pnl)) if h.latest_price else "-" }}
+            </td>
+            <td>{{ "%.0f%%" | format(h.min_t_trade_pct * 100) }}</td>
+            <td>{{ "%.0f%%" | format(h.max_t_trade_pct * 100) }}</td>
+            <td class="actions">
+              <button class="btn-sm btn-edit" onclick="editHolding({{ h.id }}, '{{ h.symbol }}', '{{ h.name or "" }}', {{ h.shares }}, {{ h.cost_basis }}, {{ h.min_t_trade_pct }}, {{ h.max_t_trade_pct }})">编辑</button>
+              <form method="POST" action="/holdings/{{ h.id }}/delete" style="display:inline" onsubmit="return confirm('确认删除 {{ h.symbol }}？')">
+                <button type="submit" class="btn-sm btn-delete">删除</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr class="summary-row">
+            <td colspan="4"><strong>合计</strong></td>
+            <td>-</td>
+            <td><strong>{{ "%.0f" | format(ns.total_value) }}</strong></td>
+            {% set total_pnl = ns.total_value - ns.total_cost %}
+            {% set total_pnl_pct = (total_pnl / ns.total_cost * 100) if ns.total_cost else 0 %}
+            <td class="{{ 'text-green' if total_pnl_pct > 0 else 'text-red' if total_pnl_pct < 0 else '' }}">
+              <strong>{{ "%+.2f%%" | format(total_pnl_pct) }}</strong>
+            </td>
+            <td class="{{ 'text-green' if total_pnl > 0 else 'text-red' if total_pnl < 0 else '' }}">
+              <strong>{{ "%+.0f" | format(total_pnl) }}</strong>
+            </td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state small">
+      <p>暂无持仓，请在右侧添加</p>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="holdings-form-panel">
+    <h3 id="form-title">新增持仓</h3>
+    <form id="holding-form" method="POST" action="/holdings/new">
+      <input type="hidden" id="edit-mode" name="edit_mode" value="">
+      <div class="form-group">
+        <label>ETF 代码 <span class="required">*</span></label>
+        <input type="text" id="symbol" name="symbol" required placeholder="例如 510300" pattern="[0-9]{6}" title="6位数字代码" onblur="resolveName()">
+        <span class="help-text">A股 ETF 代码，6位数字，如 510300（沪深300ETF）</span>
+      </div>
+      <div class="form-group">
+        <label>ETF 名称</label>
+        <input type="text" id="name" name="name" placeholder="例如 沪深300ETF，可留空">
+        <span class="help-text">ETF 中文名称，输入代码后将自动尝试匹配</span>
+      </div>
+      <div class="form-group">
+        <label>持仓股数 <span class="required">*</span></label>
+        <input type="number" id="shares" name="shares" required min="100" step="100" placeholder="例如 3000">
+        <span class="help-text">必须是 100 的整数倍（A股1手=100股）</span>
+      </div>
+      <div class="form-group">
+        <label>成本价 <span class="required">*</span></label>
+        <input type="number" id="cost_basis" name="cost_basis" required step="0.001" placeholder="例如 4.680">
+        <span class="help-text">你的实际买入均价，精确到小数点后3位</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>最小T比例</label>
+          <input type="number" id="min_t_trade_pct" name="min_t_trade_pct" step="0.01" min="0.01" max="0.50" value="0.10" placeholder="0.10">
+          <span class="help-text">做T时最少动用持仓的百分比，建议 10%</span>
+        </div>
+        <div class="form-group">
+          <label>最大T比例</label>
+          <input type="number" id="max_t_trade_pct" name="max_t_trade_pct" step="0.01" min="0.01" max="0.50" value="0.20" placeholder="0.20">
+          <span class="help-text">做T时最多动用持仓的百分比，建议 20%</span>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" id="submit-btn">添加持仓</button>
+        <button type="button" class="btn-cancel" id="cancel-btn" style="display:none" onclick="cancelEdit()">取消编辑</button>
+      </div>
+    </form>
+
+    <div class="help-box">
+      <h4>填写说明</h4>
+      <ul>
+        <li><strong>ETF 代码</strong>：上海 ETF 以 5、6 开头（如 510300），深圳 ETF 以 15、16 开头（如 159915）</li>
+        <li><strong>持仓股数</strong>：你当前持有的股数，系统基于此计算每次做T的操作量</li>
+        <li><strong>成本价</strong>：你的实际买入成本，用于持仓参考</li>
+        <li><strong>T比例</strong>：每次做T操作动用持仓的 10%~20%。例如持有 3000 股，10% 即做T 300 股</li>
+        <li>持仓数据是生成<strong>做T信号</strong>的前提条件，系统只对已录入的持仓生成T交易建议</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+function editHolding(id, symbol, name, shares, costBasis, minPct, maxPct) {
+  document.getElementById('form-title').textContent = '编辑持仓：' + symbol;
+  document.getElementById('symbol').value = symbol;
+  document.getElementById('name').value = name;
+  document.getElementById('shares').value = shares;
+  document.getElementById('cost_basis').value = costBasis;
+  document.getElementById('min_t_trade_pct').value = minPct;
+  document.getElementById('max_t_trade_pct').value = maxPct;
+  document.getElementById('submit-btn').textContent = '保存修改';
+  document.getElementById('cancel-btn').style.display = 'inline-block';
+  document.getElementById('holding-form').action = '/holdings/' + id + '/edit';
+}
+
+function cancelEdit() {
+  document.getElementById('form-title').textContent = '新增持仓';
+  document.getElementById('symbol').value = '';
+  document.getElementById('name').value = '';
+  document.getElementById('shares').value = '';
+  document.getElementById('cost_basis').value = '';
+  document.getElementById('min_t_trade_pct').value = '0.10';
+  document.getElementById('max_t_trade_pct').value = '0.20';
+  document.getElementById('submit-btn').textContent = '添加持仓';
+  document.getElementById('cancel-btn').style.display = 'none';
+  document.getElementById('holding-form').action = '/holdings/new';
+}
+
+var etfNames = {
+  "510300": "沪深300ETF",
+  "510500": "中证500ETF",
+  "510050": "上证50ETF",
+  "510880": "红利ETF",
+  "515080": "中证红利低波ETF",
+  "159915": "创业板ETF",
+  "588000": "科创50ETF",
+  "512880": "证券ETF",
+  "516160": "新能源ETF",
+  "512660": "军工ETF",
+  "512010": "医药ETF",
+  "159852": "软件ETF",
+  "159995": "芯片ETF",
+  "159819": "人工智能ETF",
+  "159825": "农业ETF",
+  "520500": "恒生创新药ETF",
+  "159949": "创业板50ETF",
+  "512100": "中证1000ETF",
+  "159845": "中证1000ETF",
+  "510210": "上证指数ETF",
+  "513100": "纳指ETF",
+  "513500": "标普500ETF",
+  "513050": "中概互联ETF",
+  "159920": "恒生ETF",
+  "159941": "纳指ETF",
+};
+
+function resolveName() {
+  var sym = document.getElementById('symbol').value.trim();
+  if (etfNames[sym] && !document.getElementById('name').value.trim()) {
+    document.getElementById('name').value = etfNames[sym];
+  }
+}
+</script>
+{% endblock %}

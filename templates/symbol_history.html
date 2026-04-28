@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}{{ symbol }} 价格走势 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+  <a href="/symbols" class="back-link">&larr; 返回标的列表</a>
+  <h2>{{ symbol }} <span class="symbol-name">{{ name }}</span></h2>
+  <div class="detail-meta">
+    {% if prices %}
+    <span>{{ prices | length }} 条记录</span>
+    <span>{{ prices[0].scan_date }} ~ {{ prices[-1].scan_date }}</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if prices %}
+{% set latest = prices[-1] %}
+{% set prev = prices[-2] if prices | length >= 2 else None %}
+<div class="price-summary-grid">
+  <div class="price-summary-card">
+    <div class="psc-label">最新收盘价</div>
+    <div class="psc-value">{{ "%.3f" | format(latest.close) }}</div>
+    <div class="psc-date">{{ latest.scan_date }}</div>
+  </div>
+  <div class="price-summary-card">
+    <div class="psc-label">当日开盘价</div>
+    <div class="psc-value">{{ "%.3f" | format(latest.open) }}</div>
+    <div class="psc-date">{{ latest.scan_date }}</div>
+    {% if prev %}
+    {% set gap = ((latest.open - prev.close) / prev.close * 100) if prev.close else 0 %}
+    <div class="psc-delta {{ 'positive' if gap > 0 else 'negative' if gap < 0 else '' }}">较前收 {{ "%+.2f%%" | format(gap) }}</div>
+    {% endif %}
+  </div>
+  <div class="price-summary-card">
+    <div class="psc-label">前日收盘价</div>
+    <div class="psc-value">{{ "%.3f" | format(prev.close) if prev else "-" }}</div>
+    <div class="psc-date">{{ prev.scan_date if prev else "-" }}</div>
+  </div>
+  <div class="price-summary-card">
+    <div class="psc-label">日内涨幅</div>
+    {% set day_change = ((latest.close - latest.open) / latest.open * 100) if latest.open else 0 %}
+    <div class="psc-value {{ 'positive' if day_change > 0 else 'negative' if day_change < 0 else '' }}">{{ "%+.2f%%" | format(day_change) }}</div>
+    <div class="psc-date">开 {{ "%.3f" | format(latest.open) }} → 收 {{ "%.3f" | format(latest.close) }}</div>
+  </div>
+</div>
+
+<div class="chart-container">
+  <canvas id="priceChart"></canvas>
+</div>
+
+<div class="section">
+  <h3>历史数据</h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th><th>开盘</th><th>最高</th><th>最低</th><th>收盘</th><th>成交量</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in prices | reverse %}
+        <tr>
+          <td>{{ p.scan_date }}</td>
+          <td>{{ "%.3f" | format(p.open) }}</td>
+          <td>{{ "%.3f" | format(p.high) }}</td>
+          <td>{{ "%.3f" | format(p.low) }}</td>
+          <td><strong>{{ "%.3f" | format(p.close) }}</strong></td>
+          <td>{{ p.volume }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+var dates = [{% for p in prices %}'{{ p.scan_date }}'{% if not loop.last %},{% endif %}{% endfor %}];
+var closes = [{% for p in prices %}{{ "%.3f" | format(p.close) }}{% if not loop.last %},{% endif %}{% endfor %}];
+var volumes = [{% for p in prices %}{{ p.volume }}{% if not loop.last %},{% endif %}{% endfor %}];
+
+var ctx = document.getElementById('priceChart').getContext('2d');
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: dates,
+    datasets: [
+      {
+        label: '收盘价',
+        data: closes,
+        borderColor: '#38bdf8',
+        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        borderWidth: 2,
+        pointRadius: 3,
+        pointBackgroundColor: '#38bdf8',
+        fill: true,
+        tension: 0.3,
+        yAxisID: 'y',
+        order: 1,
+      },
+      {
+        label: '成交量',
+        data: volumes,
+        type: 'bar',
+        backgroundColor: 'rgba(167, 139, 250, 0.3)',
+        borderColor: 'rgba(167, 139, 250, 0.5)',
+        borderWidth: 1,
+        yAxisID: 'y1',
+        order: 2,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      intersect: false,
+      mode: 'index',
+    },
+    plugins: {
+      legend: {
+        labels: { color: '#94a3b8', font: { size: 12 } }
+      },
+      tooltip: {
+        callbacks: {
+          label: function(ctx) {
+            if (ctx.dataset.label === '成交量') {
+              return '成交量: ' + ctx.raw.toLocaleString();
+            }
+            return ctx.dataset.label + ': ' + ctx.raw.toFixed(3);
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        ticks: { color: '#64748b', maxTicksLimit: 15, maxRotation: 45 },
+        grid: { color: 'rgba(51, 65, 85, 0.3)' }
+      },
+      y: {
+        type: 'linear',
+        position: 'left',
+        ticks: { color: '#38bdf8', callback: function(v) { return v.toFixed(3); } },
+        grid: { color: 'rgba(51, 65, 85, 0.3)' }
+      },
+      y1: {
+        type: 'linear',
+        position: 'right',
+        ticks: { color: '#a78bfa', callback: function(v) { return (v/10000).toFixed(0)+'万'; } },
+        grid: { display: false }
+      }
+    }
+  }
+});
+</script>
+
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">&#x1f4c8;</div>
+  <h3>暂无 {{ symbol }} 的价格数据</h3>
+  <p>执行包含该标的的扫描后，价格记录将出现在这里</p>
+</div>
+{% endif %}
+{% endblock %}

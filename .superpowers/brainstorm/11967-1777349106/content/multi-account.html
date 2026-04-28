@@ -1,0 +1,82 @@
+<h2>多账号架构设计 — 数据隔离方案</h2>
+<p class="subtitle">当前持仓是一个账号，后续可能增加其他账号</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>简单方案：accounts 表 + account_id 外键</h3>
+      <p>所有现有表加 account_id 列，同一数据库内按账号隔离。配置文件中每个账号独立配持仓。</p>
+      <div style="font-size:11px; color:#94a3b8; margin-top:8px;">
+        适用：1-3 个账号 | 改动量小 | 查询需带 account_id
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>中等方案：独立 schema / database</h3>
+      <p>每个账号独立 MySQL database 或 schema，物理隔离。配置文件支持多账号切换。</p>
+      <div style="font-size:11px; color:#94a3b8; margin-top:8px;">
+        适用：账号间需完全隔离 | 备份恢复方便 | 跨账号查询困难
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>推荐：account_id 逻辑隔离 + 账号管理页</h3>
+      <p>accounts 表管理多账号（名称/券商/类型），所有数据表加 account_id。Web 页面顶部加账号切换器，当前上下文自动过滤。一个 account_id=0 作为"策略模拟"账号。</p>
+      <div style="font-size:11px; color:#94a3b8; margin-top:8px;">
+        适用：你的场景 | 改动适中 | 跨账号对比可行 | 与现有一致
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:24px;">
+  <div class="mockup-header">方案 C 数据模型预览</div>
+  <div class="mockup-body">
+    <table style="width:100%; font-size:12px; color:#94a3b8; border-collapse:collapse;">
+      <thead>
+        <tr style="color:#64748b; text-align:left;">
+          <th style="padding:8px;">表名</th><th style="padding:8px;">改造方式</th><th style="padding:8px;">说明</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:1px solid #1e293b;">
+          <td style="padding:8px; color:#38bdf8;">accounts</td>
+          <td style="padding:8px; color:#34d399;">🆕 新建</td>
+          <td style="padding:8px;">id, name, broker, type(real/sim), created_at</td>
+        </tr>
+        <tr style="border-top:1px solid #1e293b;">
+          <td style="padding:8px; color:#38bdf8;">holdings</td>
+          <td style="padding:8px; color:#fbbf24;">+account_id</td>
+          <td style="padding:8px;">每个账号独立持仓</td>
+        </tr>
+        <tr style="border-top:1px solid #1e293b;">
+          <td style="padding:8px; color:#38bdf8;">actual_trades</td>
+          <td style="padding:8px; color:#34d399;">🆕 新建</td>
+          <td style="padding:8px;">account_id, symbol, action, price, shares, trade_time, image_path, ocr_confidence</td>
+        </tr>
+        <tr style="border-top:1px solid #1e293b;">
+          <td style="padding:8px; color:#38bdf8;">strategy_performance</td>
+          <td style="padding:8px; color:#fbbf24;">+account_id</td>
+          <td style="padding:8px;">按账号统计策略表现</td>
+        </tr>
+        <tr style="border-top:1px solid #1e293b;">
+          <td style="padding:8px; color:#38bdf8;">trade_outcomes</td>
+          <td style="padding:8px; color:#fbbf24;">+account_id</td>
+          <td style="padding:8px;">每个账号的交易结果追踪</td>
+        </tr>
+        <tr style="border-top:1px solid #1e293b;">
+          <td style="padding:8px; color:#38bdf8;">scan_reports</td>
+          <td style="padding:8px; color:#64748b;">不变</td>
+          <td style="padding:8px;">策略扫描与账号无关，保持全局</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

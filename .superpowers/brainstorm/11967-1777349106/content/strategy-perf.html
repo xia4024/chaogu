@@ -1,0 +1,115 @@
+<h2>策略绩效追踪系统设计</h2>
+<p class="subtitle">每日自动更新各策略的盈亏和关键指标统计</p>
+
+<div class="mockup" style="margin-bottom:24px;">
+  <div class="mockup-header">每日更新流水线</div>
+  <div class="mockup-body">
+    <div style="display:flex; align-items:center; gap:12px; font-size:13px; color:#94a3b8;">
+      <div style="background:#1e293b; border-radius:8px; padding:12px; text-align:center; flex:1;">
+        <div style="color:#38bdf8; font-weight:600;">① 每日扫描</div>
+        <div style="font-size:11px; margin-top:4px;">ScannerEngine.scan()<br>生成 trade_plans</div>
+      </div>
+      <span style="color:#64748b;">→</span>
+      <div style="background:#1e293b; border-radius:8px; padding:12px; text-align:center; flex:1;">
+        <div style="color:#38bdf8; font-weight:600;">② 信号落表</div>
+        <div style="font-size:11px; margin-top:4px;">trade_outcomes<br>status = 'pending'</div>
+      </div>
+      <span style="color:#64748b;">→</span>
+      <div style="background:#1e293b; border-radius:8px; padding:12px; text-align:center; flex:1;">
+        <div style="color:#38bdf8; font-weight:600;">③ 结算判定</div>
+        <div style="font-size:11px; margin-top:4px;">次日检查止损/止盈<br>是否触发</div>
+      </div>
+      <span style="color:#64748b;">→</span>
+      <div style="background:#1e293b; border-radius:8px; padding:12px; text-align:center; flex:1;">
+        <div style="color:#38bdf8; font-weight:600;">④ 统计更新</div>
+        <div style="font-size:11px; margin-top:4px;">strategy_performance<br>按日/周/月汇总</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">strategy_performance 增强</div>
+    <div class="mockup-body">
+      <table style="width:100%; font-size:12px; color:#94a3b8;">
+        <tr style="color:#64748b;">
+          <th style="text-align:left; padding:6px;">字段</th><th style="text-align:left; padding:6px;">说明</th>
+        </tr>
+        <tr><td style="padding:6px;">strategy_id</td><td style="padding:6px;">etf_trend / etf_rotation / etf_t_trade</td></tr>
+        <tr><td style="padding:6px;">total_signals</td><td style="padding:6px;">累计信号数</td></tr>
+        <tr><td style="padding:6px;">wins / losses / pending</td><td style="padding:6px;">✅ 已有</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">+ avg_holding_days</td><td style="padding:6px;">🆕 平均持仓天数</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">+ max_drawdown_pct</td><td style="padding:6px;">🆕 最大回撤</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">+ sharpe_ratio</td><td style="padding:6px;">🆕 夏普比率</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">+ best_trade_pct</td><td style="padding:6px;">🆕 最佳单笔收益</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">+ worst_trade_pct</td><td style="padding:6px;">🆕 最差单笔亏损</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">+ weekly_pnl_snapshot</td><td style="padding:6px;">🆕 近 4 周周盈亏 JSON</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">+ monthly_pnl_snapshot</td><td style="padding:6px;">🆕 近 12 月月盈亏 JSON</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">trade_outcomes 生命周期</div>
+    <div class="mockup-body">
+      <div style="font-size:12px; color:#94a3b8; line-height:2;">
+        <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
+          <span style="color:#fbbf24;">pending</span> → 信号生成，等待结果
+        </div>
+        <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
+          <span style="color:#38bdf8;">open</span> → 🆕 已开仓（在持仓中）
+        </div>
+        <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
+          <span style="color:#34d399;">win</span> → 止盈退出，记录 pnl
+        </div>
+        <div style="background:#1e293b; padding:8px; border-radius:4px; margin-bottom:6px;">
+          <span style="color:#f87171;">loss</span> → 止损退出，记录 pnl
+        </div>
+        <div style="background:#1e293b; padding:8px; border-radius:4px;">
+          <span style="color:#64748b;">expired</span> → 🆕 超期未触发（如 T  trade 当日未成交）
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;">
+  <div class="mockup">
+    <div class="mockup-header">Web 绩效面板 — 布局概念</div>
+    <div class="mockup-body">
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <div class="placeholder" style="flex:1; text-align:center; padding:20px;">📊 各策略累计盈亏柱状图</div>
+        <div class="placeholder" style="flex:1; text-align:center; padding:20px;">📈 每周 PnL 趋势折线</div>
+        <div class="placeholder" style="flex:1; text-align:center; padding:20px;">🎯 胜率 / 盈亏比 仪表盘</div>
+      </div>
+      <table style="width:100%; font-size:12px; color:#94a3b8; border-collapse:collapse;">
+        <thead>
+          <tr style="color:#64748b; text-align:left;">
+            <th style="padding:8px;">策略</th><th style="padding:8px;">信号</th><th style="padding:8px;">胜率</th>
+            <th style="padding:8px;">均盈%</th><th style="padding:8px;">均亏%</th><th style="padding:8px;">总PnL</th>
+            <th style="padding:8px;">回撤</th><th style="padding:8px;">夏普</th><th style="padding:8px;">近4周</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-top:1px solid #1e293b;">
+            <td style="padding:8px; color:#38bdf8;">etf_trend</td>
+            <td style="padding:8px;">247</td><td style="padding:8px; color:#34d399;">62%</td>
+            <td style="padding:8px; color:#34d399;">+4.2%</td><td style="padding:8px; color:#f87171;">-2.8%</td>
+            <td style="padding:8px; color:#34d399;">+12,450</td>
+            <td style="padding:8px;">-8.3%</td><td style="padding:8px;">1.2</td>
+            <td style="padding:8px; font-size:10px;">+820 +450 -200 +600</td>
+          </tr>
+          <tr style="border-top:1px solid #1e293b;">
+            <td style="padding:8px; color:#a78bfa;">etf_rotation</td>
+            <td style="padding:8px;">184</td><td style="padding:8px; color:#34d399;">51%</td>
+            <td style="padding:8px; color:#34d399;">+5.8%</td><td style="padding:8px; color:#f87171;">-4.2%</td>
+            <td style="padding:8px; color:#f87171;">-3,200</td>
+            <td style="padding:8px;">-15.2%</td><td style="padding:8px;">0.6</td>
+            <td style="padding:8px; font-size:10px;">+1500 -800 -1200 +300</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

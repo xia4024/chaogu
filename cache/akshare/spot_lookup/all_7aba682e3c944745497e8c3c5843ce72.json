@@ -1,0 +1,17 @@
+{
+  "endpoint": "spot_lookup",
+  "params": {
+    "scope": "all"
+  },
+  "fetched_at": "2026-04-17 10:26:03",
+  "rows": [
+    {
+      "代码": "510300",
+      "名称": "CSI300 ETF"
+    },
+    {
+      "代码": "512880",
+      "名称": "Brokerage ETF"
+    }
+  ]
+}

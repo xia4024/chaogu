@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}交易记录 - Chaogu-Alert{% endblock %}
+{% block content %}
+<h2>交易记录</h2>
+<p class="subtitle">上传券商截图，自动 OCR 识别交易数据</p>
+
+<div class="section">
+  <h3>上传截图</h3>
+  <div class="upload-zone" id="upload-zone">
+    <input type="file" id="file-input" accept="image/*" style="display:none">
+    <p class="upload-hint">拖拽或点击上传券商截图</p>
+    <div class="file-input-wrapper">
+      <input type="file" accept="image/*" class="file-input-native" id="file-input-native"
+             onchange="if(this.files[0]){var hidden=document.getElementById('file-input');var dt=new DataTransfer();dt.items.add(this.files[0]);hidden.files=dt.files;hidden.dispatchEvent(new Event('change'))}">
+    </div>
+  </div>
+  <div id="ocr-progress" style="display:none; margin-top:12px;">
+    <span class="spinner"></span> OCR识别中，请稍候...
+  </div>
+  <div id="ocr-result" style="margin-top:12px;"></div>
+</div>
+
+{% if trades %}
+<div class="section">
+  <h3>交易明细 <span class="count">{{ trades|length }}</span></h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>日期</th><th>标的</th><th>方向</th><th>价格</th>
+          <th>数量</th><th>金额</th><th>来源</th><th>置信度</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in trades %}
+        <tr>
+          <td>{{ t.trade_date }}</td>
+          <td><strong>{{ t.symbol }}</strong> {% if t.name %}<span class="dim">{{ t.name }}</span>{% endif %}</td>
+          <td class="{{ 'text-green' if t.action == 'buy' else 'text-red' }}">{{ action_label(t.action) }}</td>
+          <td>{{ "%.3f"|format(t.price) }}</td>
+          <td>{{ t.shares }}</td>
+          <td>{{ "%.2f"|format(t.amount) }}</td>
+          <td class="dim">{{ t.source }}</td>
+          <td>{% if t.ocr_confidence %}{{ "%.0f"|format(t.ocr_confidence * 100) }}%{% else %}-{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><p class="empty-text">暂无交易记录，请上传券商截图</p></div>
+{% endif %}
+
+<script>
+(function() {
+  var zone = document.getElementById('upload-zone');
+  var input = document.getElementById('file-input');
+  var nativeInput = document.getElementById('file-input-native');
+  var progress = document.getElementById('ocr-progress');
+  var result = document.getElementById('ocr-result');
+
+  zone.addEventListener('click', function(e) {
+    if (e.target === nativeInput || e.target.closest('.file-input-wrapper')) return;
+    input.click();
+  });
+  zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', function() { zone.classList.remove('drag-over'); });
+  zone.addEventListener('drop', function(e) {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) uploadFile(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', function() {
+    if (input.files[0]) uploadFile(input.files[0]);
+  });
+
+  function uploadFile(file) {
+    progress.style.display = 'block';
+    result.innerHTML = '';
+    var fd = new FormData();
+    fd.append('file', file);
+    fetch('/trades/upload', { method: 'POST', body: fd })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        progress.style.display = 'none';
+        if (data.error) {
+          result.innerHTML = '<div class="alert alert-error">' + data.error + '</div>';
+        } else if (data.trades && data.trades.length) {
+          var html = '<h4>识别出 ' + data.trades.length + ' 笔交易</h4><p style="color:var(--text-dim);font-size:12px;">请核对后确认保存</p>';
+          html += '<table class="ocr-preview-table"><thead><tr><th>日期</th><th>代码</th><th>方向</th><th>价格</th><th>数量</th><th>金额</th></tr></thead><tbody>';
+          data.trades.forEach(function(t) {
+            html += '<tr><td>' + t.trade_date + '</td><td>' + t.symbol + '</td><td>' + t.action + '</td><td>' + t.price + '</td><td>' + t.shares + '</td><td>' + t.amount + '</td></tr>';
+          });
+          html += '</tbody></table>';
+          html += '<button class="btn-scan" style="margin-top:8px;" onclick="confirmTrades(' + JSON.stringify(data.trades).replace(/"/g, '&quot;') + ', ' + data.image_id + ')">确认并保存</button>';
+          result.innerHTML = html;
+        } else {
+          result.innerHTML = '<div class="alert alert-error">未能识别出交易记录，请检查截图格式或手动录入</div>';
+        }
+      })
+      .catch(function(err) {
+        progress.style.display = 'none';
+        result.innerHTML = '<div class="alert alert-error">上传失败: ' + err + '</div>';
+      });
+  }
+
+  window.confirmTrades = function(trades, imageId) {
+    trades.forEach(function(t) { t.image_id = imageId; t.source = 'ocr'; });
+    fetch('/trades/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trades: trades })
+    })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.ok) {
+          location.reload();
+        } else {
+          result.innerHTML += '<div class="alert alert-error">保存失败: ' + data.error + '</div>';
+        }
+      });
+  };
+})();
+</script>
+{% endblock %}

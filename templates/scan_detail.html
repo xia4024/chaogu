@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}扫描详情 - {{ report.scan_date }} - Chaogu-Alert{% endblock %}
+
+{% block content %}
+{% if report %}
+<div class="detail-header">
+  <a href="/" class="back-link">&larr; 返回列表</a>
+  <h2>{{ report.scan_date }} 扫描详情</h2>
+  <div class="detail-meta">
+    {% if report.executed_at %}<span>{{ report.executed_at.strftime('%H:%M:%S') }}</span>{% endif %}
+    <span>基准：{{ report.benchmark_symbol }}</span>
+    <span class="badge badge-{{ report.market_regime }}">{{ regime_label(report.market_regime) }}</span>
+    <span>候选 {{ report.candidate_count }}</span>
+    <span>过滤 {{ report.filtered_count }}</span>
+  </div>
+</div>
+
+{% set open_plans = report.plans | selectattr("signal_group", "equalto", "open") | list %}
+{% set t_plans = report.plans | selectattr("signal_group", "equalto", "t_trade") | list %}
+
+<div class="section">
+  <h3>开仓信号 <span class="count">{{ open_plans | length }}</span></h3>
+  {% if open_plans %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>标的</th><th>策略</th><th>操作</th><th>评分</th>
+          <th>参考价</th><th>止损</th><th>止盈</th>
+          <th>建议股数</th><th>预计金额</th><th>佣金</th><th>占比</th><th>触发原因</th><th style="width:110px">执行</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in open_plans %}
+        <tr>
+          <td><a href="/symbol/{{ plan.symbol }}" class="symbol-link"><strong>{{ plan.symbol }}</strong><br/><span class="dim">{{ plan.name }}</span></a></td>
+          <td>{{ strategy_label(plan.strategy_id) }}</td>
+          <td><span class="badge-action {{ plan.action }}">{{ action_label(plan.action) }}</span></td>
+          <td class="score"><strong>{{ plan.score }}</strong></td>
+          <td>{{ plan.entry_price }}</td>
+          <td class="stop-loss">{{ plan.stop_loss }}</td>
+          <td>{{ plan.take_profit }}</td>
+          <td>{{ plan.suggested_shares }}</td>
+          <td>{{ "%.0f" | format(plan.suggested_value) }} 元</td>
+          <td class="text-dim">{{ "%.2f" | format(plan.estimated_commission) }}</td>
+          <td>{{ "%.2f" | format(plan.position_pct * 100) }}%</td>
+          <td class="reasons">{{ plan.reasons | join("<br/>") | safe }}</td>
+          <td class="exec-cell">{% include "exec_buttons.html" %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-text">暂无开仓信号</p>
+  {% endif %}
+</div>
+
+<div class="section">
+  <h3>做T信号 <span class="count">{{ t_plans | length }}</span></h3>
+  {% if t_plans %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>标的</th><th>策略</th><th>操作</th><th>评分</th>
+          <th>参考价</th><th>止损</th><th>止盈</th>
+          <th>建议股数</th><th>预计金额</th><th>佣金</th><th>占比</th><th>触发原因</th><th style="width:110px">执行</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for plan in t_plans %}
+        <tr>
+          <td><a href="/symbol/{{ plan.symbol }}" class="symbol-link"><strong>{{ plan.symbol }}</strong><br/><span class="dim">{{ plan.name }}</span></a></td>
+          <td>{{ strategy_label(plan.strategy_id) }}</td>
+          <td><span class="badge-action {{ plan.action }}">{{ action_label(plan.action) }}</span></td>
+          <td class="score"><strong>{{ plan.score }}</strong></td>
+          <td>{{ plan.entry_price }}</td>
+          <td class="stop-loss">{{ plan.stop_loss }}</td>
+          <td>{{ plan.take_profit }}</td>
+          <td>{{ plan.suggested_shares }}</td>
+          <td>{{ "%.0f" | format(plan.suggested_value) }} 元</td>
+          <td class="text-dim">{{ "%.2f" | format(plan.estimated_commission) }}</td>
+          <td>{{ "%.2f" | format(plan.position_pct * 100) }}%</td>
+          <td class="reasons">{{ plan.reasons | join("<br/>") | safe }}</td>
+          <td class="exec-cell">{% include "exec_buttons.html" %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-text">暂无做T信号</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Chaogu-Alert{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <nav class="topbar">
+    <div class="topbar-inner">
+      <a href="/" class="brand">◆ Chaogu-Alert</a>
+      <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')" aria-label="导航菜单">
+        ☰
+      </button>
+      <div class="nav-links">
+        <a href="/" class="{% if request.path == '/' %}active{% endif %}">扫描记录</a>
+        <a href="/symbols" class="{% if request.path.startswith('/symbol') %}active{% endif %}">价格走势</a>
+        <a href="/holdings" class="{% if request.path.startswith('/holdings') %}active{% endif %}">持仓管理</a>
+        <a href="/performance" class="{% if request.path.startswith('/performance') %}active{% endif %}">策略表现</a>
+        <a href="/optimize" class="{% if request.path.startswith('/optimize') %}active{% endif %}">策略优化</a>
+        <a href="/backtest" class="{% if request.path.startswith('/backtest') %}active{% endif %}">回测</a>
+        <a href="/trades" class="{% if request.path.startswith('/trades') %}active{% endif %}">交易记录</a>
+        <a href="/compare" class="{% if request.path.startswith('/compare') %}active{% endif %}">对比</a>
+      </div>
+      <div class="topbar-actions">
+        {% if accounts %}
+        <div class="account-switcher">
+          <select onchange="location.href='/account/'+this.value" class="account-select">
+            {% for acct in accounts %}
+            <option value="{{ acct.id }}" {% if current_account_id == acct.id %}selected{% endif %}>
+              {{ acct.name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        {% endif %}
+        <a href="/mode/{{ 'demo' if data_mode == 'real' else 'real' }}" class="mode-toggle" title="切换数据模式">
+          {{ mode_label(data_mode) }}
+        </a>
+        <form method="POST" action="/scan/run" class="scan-btn-form" id="scan-form">
+        <select name="data_source" class="ds-select" title="数据源：demo=模拟数据快速测试，auto=真实行情含做T">
+          <option value="demo" {% if data_mode == 'demo' %}selected{% endif %}>Demo 模拟</option>
+          <option value="auto" {% if data_mode == 'real' %}selected{% endif %}>Auto 真实</option>
+          <option value="akshare">Akshare</option>
+          <option value="sina">Sina</option>
+        </select>
+        <button type="submit" class="btn-scan" id="scan-btn" onclick="startScan()">
+          <span class="btn-scan-icon">&#9654;</span> 执行扫描
+        </button>
+      </form>
+      </div><!-- .topbar-actions -->
+    </div>
+  </nav>
+
+  <main class="main-container">
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    {% if message %}
+    <div class="alert alert-{{ message_type | default('success') }}">{{ message }}</div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <script>
+    function startScan() {
+      var btn = document.getElementById('scan-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span> 扫描中...';
+      setTimeout(function() {
+        if (btn.disabled) {
+          btn.innerHTML = '处理中...';
+        }
+      }, 5000);
+    }
+    (function() {
+      var path = location.pathname;
+      var links = document.querySelectorAll('.nav-links a');
+      links.forEach(function(link) {
+        var lp = link.pathname;
+        if (lp === path) {
+          link.classList.add('active');
+        } else if (lp !== '/' && path.startsWith(lp)) {
+          link.classList.add('active');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

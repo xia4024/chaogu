@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}回测详情 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+  <a href="/backtest" class="back-link">&larr; 返回回测列表</a>
+  <h2>回测详情</h2>
+</div>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% elif run %}
+<div class="dashboard-grid">
+  <div class="dash-card accent-blue">
+    <div class="dash-card-value {{ 'text-green' if run.total_return_pct > 0 else 'text-red' }}">{{ "%+.2f" | format(run.total_return_pct) }}%</div>
+    <div class="dash-card-label">总收益率</div>
+    <div class="dash-card-sub">{{ run.start_date }} ~ {{ run.end_date }}</div>
+  </div>
+  <div class="dash-card accent-green">
+    <div class="dash-card-value">{{ "%.1f" | format(run.win_rate * 100) }}%</div>
+    <div class="dash-card-label">胜率</div>
+    <div class="dash-card-sub">{{ run.wins }}W / {{ run.losses }}L / {{ run.total_trades }}笔</div>
+  </div>
+  <div class="dash-card accent-yellow">
+    <div class="dash-card-value">{{ "%.2f" | format(run.max_drawdown_pct) }}%</div>
+    <div class="dash-card-label">最大回撤</div>
+    <div class="dash-card-sub">初始 {{ "%.0f" | format(run.initial_capital) }} → 最终 {{ "%.0f" | format(run.final_equity) }}</div>
+  </div>
+  <div class="dash-card accent-purple">
+    <div class="dash-card-value">{% if run.profit_factor %}{{ "%.2f" | format(run.profit_factor) }}{% else %}&infin;{% endif %}</div>
+    <div class="dash-card-label">盈亏比</div>
+    <div class="dash-card-sub">均盈 {{ "%+.2f" | format(run.avg_win_pct) }}% / 均亏 {{ "%+.2f" | format(run.avg_loss_pct) }}%</div>
+  </div>
+</div>
+
+{% if signals %}
+{% set executed_count = signals | selectattr('executed', 'equalto', 1) | list | length %}
+{% set skipped_count = signals | selectattr('executed', 'equalto', 0) | list | length %}
+{% set exec_rate = (executed_count / signals | length * 100) if signals else 0 %}
+<div class="section">
+  <h3>策略信号分析 <span class="count">{{ signals | length }}</span></h3>
+
+  <div class="signal-summary-grid">
+    <div class="signal-stat">
+      <div class="signal-stat-value text-green">{{ executed_count }}</div>
+      <div class="signal-stat-label">已执行</div>
+    </div>
+    <div class="signal-stat">
+      <div class="signal-stat-value text-yellow">{{ skipped_count }}</div>
+      <div class="signal-stat-label">被拒绝</div>
+    </div>
+    <div class="signal-stat">
+      <div class="signal-stat-value">{{ "%.1f" | format(exec_rate) }}%</div>
+      <div class="signal-stat-label">执行率</div>
+    </div>
+    <div class="signal-stat">
+      {% set avg_score = signals | sum(attribute='score') / signals | length %}
+      <div class="signal-stat-value">{{ "%.1f" | format(avg_score) }}</div>
+      <div class="signal-stat-label">均分</div>
+    </div>
+  </div>
+
+  {% set skip_reasons = {} %}
+  {% for s in signals if not s.executed %}
+    {% set _ = skip_reasons.update({s.skip_reason: skip_reasons.get(s.skip_reason, 0) + 1}) %}
+  {% endfor %}
+  {% if skip_reasons %}
+  <div class="skip-reasons">
+    <span class="dim">拒绝原因: </span>
+    {% for reason, cnt in skip_reasons.items() %}
+    <span class="skip-tag">{{ reason }} ({{ cnt }})</span>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% set strategies = {} %}
+  {% for s in signals %}
+    {% set _ = strategies.update({s.strategy_id: strategies.get(s.strategy_id, 0) + 1}) %}
+  {% endfor %}
+  <div class="strategy-breakdown">
+    <span class="dim">策略分布: </span>
+    {% for sid, cnt in strategies.items() %}
+    <span class="strategy-tag">{{ sid }} ({{ cnt }})</span>
+    {% endfor %}
+  </div>
+
+  <details style="margin-top: 1rem;">
+    <summary style="cursor:pointer; color:#818cf8; font-weight:600;">查看所有信号明细</summary>
+    <div class="table-wrap" style="margin-top:0.75rem;">
+      <table style="font-size:0.8rem;">
+        <thead>
+          <tr>
+            <th>交易日</th><th>标的</th><th>策略</th><th>方向</th>
+            <th>评分</th><th>入场价</th><th>止损</th><th>止盈</th>
+            <th>建议股数</th><th>建议金额</th><th>执行</th><th>拒绝原因</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in signals %}
+          <tr class="{{ 'executed-row' if s.executed else 'skipped-row' }}">
+            <td>{{ s.trading_day }}</td>
+            <td><strong>{{ s.symbol }}</strong></td>
+            <td class="dim">{{ s.strategy_id }}</td>
+            <td class="{{ 'text-green' if s.action == 'buy' else 'text-red' }}">{{ s.action }}</td>
+            <td>{{ "%.1f" | format(s.score) }}</td>
+            <td>{{ "%.3f" | format(s.entry_price) }}</td>
+            <td>{{ "%.3f" | format(s.stop_loss) }}</td>
+            <td>{{ "%.3f" | format(s.take_profit) }}</td>
+            <td>{{ s.suggested_shares }}</td>
+            <td>{{ "%.0f" | format(s.suggested_value) }}</td>
+            <td>{% if s.executed %}<span class="badge badge-green">是</span>{% else %}<span class="badge badge-red">否</span>{% endif %}</td>
+            <td class="dim">{{ s.skip_reason }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </details>
+</div>
+{% endif %}
+
+{% if trades %}
+<div class="section">
+  <h3>交易明细 <span class="count">{{ trades | length }}</span></h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>标的</th><th>策略</th><th>入场日</th><th>出场日</th>
+          <th>入场价</th><th>出场价</th><th>股数</th><th>盈亏额</th><th>盈亏%</th><th>原因</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in trades %}
+        <tr>
+          <td><a href="/symbol/{{ t.symbol }}" class="symbol-link"><strong>{{ t.symbol }}</strong></a></td>
+          <td><span class="dim">{{ t.strategy_id }}</span></td>
+          <td>{{ t.entry_date }}</td>
+          <td>{{ t.exit_date or "-" }}</td>
+          <td>{{ "%.3f" | format(t.entry_price) }}</td>
+          <td>{{ "%.3f" | format(t.exit_price) }}</td>
+          <td>{{ t.shares }}</td>
+          <td class="{{ 'text-green' if t.pnl_amount > 0 else 'text-red' if t.pnl_amount < 0 else '' }}">{{ "%+.0f" | format(t.pnl_amount) }}</td>
+          <td class="{{ 'text-green' if t.pnl_pct > 0 else 'text-red' if t.pnl_pct < 0 else '' }}">{{ "%+.2f" | format(t.pnl_pct * 100) }}%</td>
+          <td><span class="dim">{{ t.exit_reason }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="summary-row">
+          <td colspan="6"><strong>合计</strong></td>
+          <td>{{ trades | sum(attribute='shares') }}</td>
+          {% set total_pnl = trades | sum(attribute='pnl_amount') %}
+          <td class="{{ 'text-green' if total_pnl > 0 else 'text-red' if total_pnl < 0 else '' }}"><strong>{{ "%+.0f" | format(total_pnl) }}</strong></td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state small">
+  <p class="empty-text">该回测没有产生交易</p>
+</div>
+{% endif %}
+
+<div class="detail-meta">
+  <span>数据源: {{ run.data_source }}</span>
+  <span class="dot">&middot;</span>
+  <span>执行时间: {{ run.executed_at }}</span>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}回测历史 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<h2>回测历史</h2>
+<p class="subtitle">历史回测运行记录，可通过 run_backtest.py --persist 生成</p>
+
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+{% if available_years %}
+<div class="filter-bar">
+  <label>年份</label>
+  <select id="year-select" onchange="applyFilter()">
+    <option value="">全部</option>
+    {% for y in available_years %}
+    <option value="{{ y }}" {% if current_year == y %}selected{% endif %}>{{ y }}年</option>
+    {% endfor %}
+  </select>
+  <span class="filter-divider">|</span>
+  <label>月份</label>
+  <select id="month-select" onchange="applyFilter()">
+    <option value="">全部</option>
+    {% for m in range(1, 13) %}
+    <option value="{{ m }}" {% if current_month == m %}selected{% endif %}>{{ m }}月</option>
+    {% endfor %}
+  </select>
+  <button class="btn-reset" onclick="resetFilter()">重置</button>
+  <span class="filter-result">共 {{ runs|length }} 条记录</span>
+</div>
+{% endif %}
+
+{% if runs %}
+<div class="scan-list">
+  {% for r in runs %}
+  <a href="/backtest/{{ r.id }}" class="scan-card">
+    <div>
+      <div class="scan-date">
+        {{ r.start_date }} ~ {{ r.end_date }}
+        <span class="scan-time">{{ r.data_source }}</span>
+      </div>
+      <div class="scan-meta">
+        收益 <strong class="{% if r.total_return_pct > 0 %}text-green{% else %}text-red{% endif %}">{{ "%+.2f" | format(r.total_return_pct) }}%</strong>
+        <span class="dot">&middot;</span>
+        胜率 {{ "%.1f" | format(r.win_rate * 100) }}%
+        <span class="dot">&middot;</span>
+        回撤 {{ "%.2f" | format(r.max_drawdown_pct) }}%
+        <span class="dot">&middot;</span>
+        {{ r.total_trades }} 笔交易
+      </div>
+    </div>
+    <div class="scan-card-right">
+      <span class="plan-count">
+        {{ r.wins }}W / {{ r.losses }}L
+        {% if r.profit_factor %}&middot; PF {{ "%.2f" | format(r.profit_factor) }}{% endif %}
+      </span>
+      <span class="arrow">&rarr;</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">&#x1f4ca;</div>
+  <h3>
+    {% if current_year or current_month %}
+    暂无匹配的回测记录
+    {% else %}
+    暂无回测记录
+    {% endif %}
+  </h3>
+  <p>
+    {% if current_year or current_month %}
+    当前筛选条件下无结果，请调整筛选条件或<a href="/backtest">查看全部</a>
+    {% else %}
+    运行 <code>python run_backtest.py --start YYYY-MM-DD --end YYYY-MM-DD --persist</code> 生成回测报告
+    {% endif %}
+  </p>
+</div>
+{% endif %}
+
+<script>
+function applyFilter() {
+  var year = document.getElementById('year-select').value;
+  var month = document.getElementById('month-select').value;
+  var params = [];
+  if (year) params.push('year=' + year);
+  if (month) params.push('month=' + month);
+  var qs = params.length ? '?' + params.join('&') : '';
+  window.location.href = '/backtest' + qs;
+}
+function resetFilter() {
+  window.location.href = '/backtest';
+}
+</script>
+{% endblock %}

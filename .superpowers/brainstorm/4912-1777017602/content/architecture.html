@@ -1,0 +1,90 @@
+<h2>系统架构细节</h2>
+<p class="subtitle">MySQL 为统一数据源，Flask 提供前端 + API</p>
+
+<div class="section">
+  <h3>数据流（更新版）</h3>
+  <div class="mockup">
+    <div class="mockup-header">扫描 → 持久化 → 浏览 全链路</div>
+    <div class="mockup-body">
+      <div style="display:flex;flex-direction:column;gap:14px;padding:8px;">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="mock-content" style="text-align:center;background:#e8f4fd;padding:12px;border-radius:8px;">
+            run_scheduled.py<br/><span style="font-size:12px;color:#666;">定时扫描入口</span>
+          </div>
+          <div class="mock-content" style="text-align:center;background:#faf5ff;padding:12px;border-radius:8px;">
+            web.py<br/><span style="font-size:12px;color:#666;">Flask 应用（独立进程）</span>
+          </div>
+        </div>
+
+        <div style="text-align:center;color:#888;">↓↓</div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="mock-content" style="text-align:center;background:#fefce8;padding:10px;border-radius:8px;font-size:13px;">
+              1. 从 MySQL holdings 读持仓
+            </div>
+            <div class="mock-content" style="text-align:center;background:#fefce8;padding:10px;border-radius:8px;font-size:13px;">
+              2. ScannerEngine.scan()
+            </div>
+            <div class="mock-content" style="text-align:center;background:#fefce8;padding:10px;border-radius:8px;font-size:13px;">
+              3. MySqlPersistence.save_scan()
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div class="mock-content" style="text-align:center;background:#f0fdf4;padding:10px;border-radius:8px;font-size:13px;">
+              GET / → 扫描记录列表
+            </div>
+            <div class="mock-content" style="text-align:center;background:#f0fdf4;padding:10px;border-radius:8px;font-size:13px;">
+              GET /scan/{id} → 扫描详情
+            </div>
+            <div class="mock-content" style="text-align:center;background:#f0fdf4;padding:10px;border-radius:8px;font-size:13px;">
+              GET/POST /holdings → 持仓管理
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align:center;color:#888;">↓↓</div>
+
+        <div class="mock-content" style="text-align:center;background:#fff1f2;padding:12px;border-radius:8px;">
+          MySQL @ 192.168.1.137:3306 / claude<br/>
+          <span style="font-size:12px;color:#666;">scan_reports · trade_plans · holdings</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Python 项目新增文件</h3>
+  <table style="width:100%;font-size:13px;border-collapse:collapse;">
+    <tr style="background:#f3f4f6;">
+      <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">文件</th>
+      <th style="padding:6px 8px;text-align:left;border:1px solid #e5e7eb;">职责</th>
+    </tr>
+    <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">src/chaogu_alert/db.py</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">MySQL 连接管理、建表、CRUD 操作</td></tr>
+    <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">src/chaogu_alert/mysql_persistence.py</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">MySqlScanPersistence — 实现 ScanPersistence 协议</td></tr>
+    <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">web.py</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">Flask 应用入口（项目根目录）</td></tr>
+    <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">templates/</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">Jinja2 模板（base, scan_list, scan_detail, holdings）</td></tr>
+    <tr><td style="padding:6px 8px;border:1px solid #e5e7eb;">static/style.css</td><td style="padding:6px 8px;border:1px solid #e5e7eb;">全局样式</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h3>关键改造点</h3>
+  <div class="pros-cons">
+    <div class="pros"><h4>config.toml 新增</h4>
+      <ul>
+        <li>[mysql] 段：host, port, user, password, database</li>
+        <li>Scanner 从 MySQL holdings 读持仓时，忽略 config.toml 中注释的 holdings</li>
+      </ul>
+    </div>
+    <div class="cons"><h4>兼容性</h4>
+      <ul>
+        <li>若 MySQL 连接失败，fallback 到 config.toml 的 [[portfolio.holdings]]</li>
+        <li>JSONL 持久化保留，与 MySQL 并行写入</li>
+      </ul>
+    </div>
+  </div>
+</div>

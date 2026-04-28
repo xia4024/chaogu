@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}扫描中 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<div class="empty-state">
+  <div class="empty-icon" style="font-size:48px">&#x2699;</div>
+  <h3>扫描执行中</h3>
+  <p>后台正在获取数据并生成信号，请稍候...</p>
+  <div class="scan-spinner" style="margin:20px auto;width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite"></div>
+  <p style="margin-top:16px;font-size:13px;color:var(--text-dim)">完成后将自动跳转，或 <a href="/" style="color:var(--accent)">手动刷新</a></p>
+</div>
+
+<script>
+(function poll() {
+  fetch('/scan/status/{{ task_id }}')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.status === 'done') {
+        window.location.href = '/';
+      } else {
+        setTimeout(poll, 2000);
+      }
+    })
+    .catch(function() {
+      setTimeout(poll, 3000);
+    });
+})();
+</script>
+
+<style>
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}

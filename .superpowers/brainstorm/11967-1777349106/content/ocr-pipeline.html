@@ -1,0 +1,117 @@
+<h2>实盘交易记录 — OCR 识别流水线</h2>
+<p class="subtitle">截图上传 → PaddleOCR 提取 → 人工确认 → 落表</p>
+
+<div class="mockup" style="margin-bottom:24px;">
+  <div class="mockup-header">完整流水线</div>
+  <div class="mockup-body">
+    <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:#94a3b8; flex-wrap:wrap;">
+      <div style="background:#1e293b; border-radius:8px; padding:14px; text-align:center; min-width:100px;">
+        <div style="font-size:20px;">📤</div>
+        <div style="font-weight:600; color:#e2e8f0;">上传截图</div>
+        <div style="font-size:10px; margin-top:4px;">当日明细 / 历史列表</div>
+      </div>
+      <span style="color:#64748b;">→</span>
+      <div style="background:#1e293b; border-radius:8px; padding:14px; text-align:center; min-width:100px;">
+        <div style="font-size:20px;">🔍</div>
+        <div style="font-weight:600; color:#e2e8f0;">PaddleOCR</div>
+        <div style="font-size:10px; margin-top:4px;">文本检测 + 识别</div>
+      </div>
+      <span style="color:#64748b;">→</span>
+      <div style="background:#1e293b; border-radius:8px; padding:14px; text-align:center; min-width:100px;">
+        <div style="font-size:20px;">🧠</div>
+        <div style="font-weight:600; color:#e2e8f0;">结构化解析</div>
+        <div style="font-size:10px; margin-top:4px;">正则 + 位置推断<br>提取交易字段</div>
+      </div>
+      <span style="color:#64748b;">→</span>
+      <div style="background:#1e293b; border-radius:8px; padding:14px; text-align:center; min-width:100px;">
+        <div style="font-size:20px;">✅</div>
+        <div style="font-weight:600; color:#e2e8f0;">人工确认</div>
+        <div style="font-size:10px; margin-top:4px;">Web 预览<br>修正 + 确认</div>
+      </div>
+      <span style="color:#64748b;">→</span>
+      <div style="background:#1e293b; border-radius:8px; padding:14px; text-align:center; min-width:100px;">
+        <div style="font-size:20px;">💾</div>
+        <div style="font-weight:600; color:#e2e8f0;">落表</div>
+        <div style="font-size:10px; margin-top:4px;">actual_trades<br>+ trade_images</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">actual_trades 表设计</div>
+    <div class="mockup-body">
+      <table style="width:100%; font-size:11px; color:#94a3b8;">
+        <tr style="color:#64748b; text-align:left;">
+          <th style="padding:6px;">字段</th><th style="padding:6px;">类型</th><th style="padding:6px;">说明</th>
+        </tr>
+        <tr><td style="padding:6px; color:#38bdf8;">id</td><td style="padding:6px;">INT PK</td><td style="padding:6px;"></td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">account_id</td><td style="padding:6px;">INT FK</td><td style="padding:6px;">多账号隔离</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">symbol</td><td style="padding:6px;">VARCHAR(20)</td><td style="padding:6px;">证券代码</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">name</td><td style="padding:6px;">VARCHAR(100)</td><td style="padding:6px;">证券名称</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">action</td><td style="padding:6px;">VARCHAR(10)</td><td style="padding:6px;">buy / sell</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">trade_date</td><td style="padding:6px;">DATE</td><td style="padding:6px;">成交日期 ⚡精确</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">trade_time</td><td style="padding:6px;">TIME</td><td style="padding:6px;">成交时间</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">price</td><td style="padding:6px;">DECIMAL(10,3)</td><td style="padding:6px;">成交价格</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">shares</td><td style="padding:6px;">INT</td><td style="padding:6px;">成交数量</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">amount</td><td style="padding:6px;">DECIMAL(14,2)</td><td style="padding:6px;">成交金额</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">commission</td><td style="padding:6px;">DECIMAL(10,2)</td><td style="padding:6px;">手续费（如有）</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">image_id</td><td style="padding:6px;">INT FK</td><td style="padding:6px;">🆕 来源图片</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">ocr_confidence</td><td style="padding:6px;">DECIMAL(4,3)</td><td style="padding:6px;">🆕 OCR 置信度</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">ocr_raw_text</td><td style="padding:6px;">TEXT</td><td style="padding:6px;">🆕 OCR 原始输出</td></tr>
+        <tr style="color:#34d399;"><td style="padding:6px;">source</td><td style="padding:6px;">VARCHAR(20)</td><td style="padding:6px;">🆕 ocr / manual</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">notes</td><td style="padding:6px;">TEXT</td><td style="padding:6px;">备注</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">created_at</td><td style="padding:6px;">DATETIME</td><td style="padding:6px;"></td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">trade_images 表 & 存储</div>
+    <div class="mockup-body">
+      <table style="width:100%; font-size:11px; color:#94a3b8; margin-bottom:16px;">
+        <tr style="color:#64748b; text-align:left;">
+          <th style="padding:6px;">字段</th><th style="padding:6px;">说明</th>
+        </tr>
+        <tr><td style="padding:6px; color:#38bdf8;">id</td><td style="padding:6px;">INT PK</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">account_id</td><td style="padding:6px;">所属账号</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">file_path</td><td style="padding:6px;">本地路径 uploads/trades/</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">file_hash</td><td style="padding:6px;">MD5 去重，防止重复上传</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">trade_date_hint</td><td style="padding:6px;">用户标注的日期（用于历史补录）</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">ocr_status</td><td style="padding:6px;">pending / done / failed</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">ocr_result_json</td><td style="padding:6px;">OCR 结构化结果 JSON</td></tr>
+        <tr><td style="padding:6px; color:#38bdf8;">uploaded_at</td><td style="padding:6px;">DATETIME</td></tr>
+      </table>
+      <div style="background:#0f172a; border-radius:6px; padding:12px; font-size:11px;">
+        <div style="color:#64748b; margin-bottom:4px;">📁 存储策略</div>
+        <div style="color:#94a3b8;">uploads/trades/{account_id}/{YYYY-MM}/</div>
+        <div style="color:#94a3b8;">按账号 + 月份分目录，便于管理</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:24px;">
+  <div class="mockup-header">结构化解析策略</div>
+  <div class="mockup-body">
+    <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+      <div style="margin-bottom:8px;">
+        <span style="color:#38bdf8; font-weight:600;">1. PaddleOCR 输出</span>
+        <span style="color:#64748b;"> → 文本框列表 [{text, bbox, confidence}]</span>
+      </div>
+      <div style="margin-bottom:8px;">
+        <span style="color:#38bdf8; font-weight:600;">2. 排版聚类</span>
+        <span style="color:#64748b;"> → 按 Y 坐标分组，识别每行记录</span>
+      </div>
+      <div style="margin-bottom:8px;">
+        <span style="color:#38bdf8; font-weight:600;">3. 正则匹配</span>
+        <span style="color:#64748b;"> → 代码 \d{6} | 价格 \d+\.\d+ | 买/卖 | 日期 \d{4}-\d{2}-\d{2}</span>
+      </div>
+      <div>
+        <span style="color:#38bdf8; font-weight:600;">4. 字段映射</span>
+        <span style="color:#64748b;"> → 将匹配结果填入 actual_trades 字段</span>
+      </div>
+    </div>
+  </div>
+</div>

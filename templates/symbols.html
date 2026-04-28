@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}标的价格走势 - Chaogu-Alert{% endblock %}
+
+{% block content %}
+<h2>标的价格走势</h2>
+<p class="subtitle">所有已被扫描记录的标的，点击查看历史价格折线图</p>
+
+{% if symbols %}
+<div class="scan-list">
+  {% for s in symbols %}
+  <a href="/symbol/{{ s.symbol }}" class="scan-card">
+    <div class="scan-card-left">
+      <div class="scan-date">{{ s.symbol }}</div>
+      <div class="scan-meta">{{ s.name or "" }}</div>
+    </div>
+    <div class="scan-card-right">
+      <span class="arrow">&rarr;</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">&#x1f4c8;</div>
+  <h3>暂无标的价格数据</h3>
+  <p>执行一次扫描后，标的价格记录将出现在这里</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}策略 vs 实盘对比 - Chaogu-Alert{% endblock %}
+{% block content %}
+<h2>策略 vs 实盘对比</h2>
+<p class="subtitle">发现交易行为缺陷，缩小策略信号与实际执行的差距</p>
+
+{% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+
+{% if result %}
+<div class="compare-summary">
+  <div class="compare-summary-card">
+    <div class="compare-summary-value text-green">{{ "%+.0f"|format(result.total_strategy_pnl) }}</div>
+    <div class="compare-summary-label">策略累计盈亏</div>
+  </div>
+  <div class="compare-summary-card">
+    <div class="compare-summary-value {{ 'text-green' if result.total_actual_pnl > 0 else 'text-red' }}">{{ "%+.0f"|format(result.total_actual_pnl) }}</div>
+    <div class="compare-summary-label">实盘累计盈亏</div>
+  </div>
+  <div class="compare-summary-card">
+    <div class="compare-summary-value {{ 'text-green' if result.execution_gap >= 0 else 'text-red' }}">{{ "%+.0f"|format(result.execution_gap) }}</div>
+    <div class="compare-summary-label">执行差距</div>
+  </div>
+  <div class="compare-summary-card">
+    <div class="compare-summary-value" style="color:var(--purple)">{{ "%.1f"|format(result.signal_execution_rate * 100) }}%</div>
+    <div class="compare-summary-label">信号执行率</div>
+  </div>
+</div>
+
+<p class="subtitle">
+  Actual PnL uses FIFO realized sells. Fees: {{ "%.0f"|format(result.actual_total_commission) }}.
+  Open symbols: {{ result.open_positions|length }}.
+  {% if result.unresolved_sell_trades %}Unresolved sells: {{ result.unresolved_sell_trades }} (not counted in actual PnL).{% endif %}
+</p>
+
+{% if result.defect_summary %}
+<div class="section">
+  <h3>行为缺陷分析</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>缺陷类型</th><th>次数</th><th>累计损失</th></tr></thead>
+      <tbody>
+        {% for dev_type, info in result.defect_summary.items() %}
+        <tr>
+          <td>
+            {% if dev_type == 'miss' %}漏单（有信号未跟）
+            {% elif dev_type == 'hold_loss' %}不止损（止损信号未执行）
+            {% elif dev_type == 'overtrade' %}过度交易（无信号开仓）
+            {% elif dev_type == 'early_exit' %}过早止盈（未到止盈位卖出）
+            {% elif dev_type == 'slippage' %}滑点（成交价偏离建议价）
+            {% else %}{{ dev_type }}{% endif %}
+          </td>
+          <td>{{ info.count }}</td>
+          <td class="text-red">{{ "%+.0f"|format(info.total_loss) }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<div class="section">
+  <h3>逐笔对比 <span class="count">{{ result.matched_rows|length }}</span></h3>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>日期</th><th>标的</th><th>策略信号</th><th>实盘操作</th><th>偏差</th><th>影响</th></tr>
+      </thead>
+      <tbody>
+        {% for row in result.matched_rows %}
+        <tr class="{{ 'match-row' if row.deviation == 'match' else 'deviation-row' }}">
+          <td>{{ row.trade_date }}</td>
+          <td><strong>{{ row.symbol }}</strong></td>
+          <td>{{ row.strategy_signal.action if row.strategy_signal else '—' }}</td>
+          <td>{{ row.actual_trade.action if row.actual_trade else '—' }}</td>
+          <td class="{{ 'text-green' if row.deviation == 'match' else 'text-red' }}">
+            {% if row.deviation == 'match' %}一致
+            {% elif row.deviation == 'miss' %}漏单
+            {% elif row.deviation == 'hold_loss' %}不止损
+            {% elif row.deviation == 'overtrade' %}过度交易
+            {% elif row.deviation == 'early_exit' %}过早止盈
+            {% else %}{{ row.deviation }}{% endif %}
+          </td>
+          <td class="{{ 'text-green' if row.pnl_impact > 0 else 'text-red' if row.pnl_impact < 0 else '' }}">
+            {{ "%+.0f"|format(row.pnl_impact) if row.pnl_impact else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="empty-state"><p class="empty-text">暂无数据。请先执行扫描生成策略信号，并上传交易截图记录实盘交易。</p></div>
+{% endif %}
+{% endblock %}

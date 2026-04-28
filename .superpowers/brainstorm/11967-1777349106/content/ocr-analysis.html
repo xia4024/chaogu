@@ -1,0 +1,132 @@
+<h2>OCR 字段识别分析 — 招商证券微信版</h2>
+<p class="subtitle">从你提供的两张截图解析出的数据结构</p>
+
+<div class="split">
+  <!-- Left: Daily detail -->
+  <div class="mockup">
+    <div class="mockup-header">截图 1：当日成交明细</div>
+    <div class="mockup-body">
+      <div style="background:#0f172a; border-radius:8px; padding:16px; font-size:13px; line-height:2;">
+        <div style="color:#64748b; font-size:11px; margin-bottom:8px;">← 微信小程序顶部导航</div>
+
+        <div style="background:#1e293b; border-left:3px solid #38bdf8; padding:12px; border-radius:4px; margin-bottom:12px;">
+          <div style="color:#e2e8f0;"><strong>持仓</strong> 标签页</div>
+          <div style="color:#64748b; font-size:11px;">账户总资产 / 盈亏 概览区</div>
+        </div>
+
+        <div style="background:#1e293b; border-left:3px solid #34d399; padding:12px; border-radius:4px; margin-bottom:12px;">
+          <div style="color:#e2e8f0;"><strong>成交明细卡片</strong></div>
+          <table style="width:100%; font-size:12px; color:#94a3b8; margin-top:8px;">
+            <tr><td style="color:#64748b;">证券名称</td><td style="color:#e2e8f0;">XXX ETF</td><td style="color:#64748b;">代码</td><td style="color:#e2e8f0;">510300</td></tr>
+            <tr><td style="color:#64748b;">买卖方向</td><td style="color:#34d399;">买入</td><td style="color:#64748b;">成交数量</td><td style="color:#e2e8f0;">10,000</td></tr>
+            <tr><td style="color:#64748b;">成交价格</td><td style="color:#e2e8f0;">4.500</td><td style="color:#64748b;">成交金额</td><td style="color:#e2e8f0;">45,000.00</td></tr>
+            <tr><td style="color:#64748b;">成交时间</td><td style="color:#e2e8f0;" colspan="3">2026-04-27 14:52:36</td></tr>
+          </table>
+        </div>
+
+        <div style="background:#1e293b; border-left:3px solid #fbbf24; padding:12px; border-radius:4px;">
+          <div style="color:#fbbf24;">⚠ OCR 关键字段</div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+            证券代码 · 名称 · 方向(买/卖) · 价格 · 数量 · 金额 · 时间
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: History list -->
+  <div class="mockup">
+    <div class="mockup-header">截图 2：历史成交记录</div>
+    <div class="mockup-body">
+      <div style="background:#0f172a; border-radius:8px; padding:16px; font-size:13px; line-height:2;">
+        <div style="color:#64748b; font-size:11px; margin-bottom:8px;">← 日期筛选 / 查询条件区</div>
+
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:6px; padding:12px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#e2e8f0; font-weight:600;">证券名称</span>
+            <span style="color:#34d399; font-size:11px;">买入</span>
+          </div>
+          <div style="display:flex; gap:16px; font-size:11px; color:#94a3b8; margin-top:4px;">
+            <span>代码 510300</span>
+            <span>价 4.500</span>
+            <span>量 10,000</span>
+          </div>
+          <div style="font-size:10px; color:#64748b; margin-top:4px;">2026-04-27 14:52</div>
+        </div>
+
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:6px; padding:12px; margin-bottom:8px;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#e2e8f0; font-weight:600;">另一标的</span>
+            <span style="color:#f87171; font-size:11px;">卖出</span>
+          </div>
+          <div style="display:flex; gap:16px; font-size:11px; color:#94a3b8; margin-top:4px;">
+            <span>代码 159915</span>
+            <span>价 3.200</span>
+            <span>量 5,000</span>
+          </div>
+          <div style="font-size:10px; color:#64748b; margin-top:4px;">2026-04-26 10:15</div>
+        </div>
+
+        <div style="background:#1e293b; border:1px solid #334155; border-radius:6px; padding:12px; opacity:0.6;">
+          <div style="display:flex; justify-content:space-between;">
+            <span style="color:#94a3b8;">证券名称</span>
+            <span style="color:#94a3b8; font-size:11px;">买入</span>
+          </div>
+          <div style="display:flex; gap:16px; font-size:11px; color:#64748b; margin-top:4px;">
+            <span>代码 512880</span>
+            <span>价 1.850</span>
+            <span>量 8,000</span>
+          </div>
+          <div style="font-size:10px; color:#64748b; margin-top:4px;">2026-04-25 09:45</div>
+        </div>
+
+        <div style="background:#1e293b; border-left:3px solid #fbbf24; padding:12px; border-radius:4px; margin-top:12px;">
+          <div style="color:#fbbf24;">⚠ OCR 策略差异</div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+            列表页：批量识别多行 → 按日期/代码/方向/价格/数量/金额逐一提取<br>
+            需处理分页滚动截图的合并去重
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;">
+  <div class="mockup">
+    <div class="mockup-header">OCR 方案对比</div>
+    <div class="mockup-body">
+      <div style="display:flex; gap:16px;">
+
+        <div style="flex:1; background:#1e293b; border-radius:8px; padding:16px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="background:#38bdf8; color:#0f172a; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">方案 A</span>
+            <strong style="font-size:14px;">PaddleOCR 本地识别</strong>
+          </div>
+          <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+            ✅ 免费，无 API 调用限制<br>
+            ✅ 数据不出本地，隐私安全<br>
+            ✅ 中文识别效果好 (百度出品)<br>
+            ⚠ 需要 pip install paddleocr (约 500MB)<br>
+            ⚠ 首次加载模型较慢
+          </div>
+        </div>
+
+        <div style="flex:1; background:#1e293b; border-radius:8px; padding:16px;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+            <span style="background:#a78bfa; color:#0f172a; padding:2px 8px; border-radius:4px; font-size:11px; font-weight:600;">方案 B</span>
+            <strong style="font-size:14px;">大模型 Vision API</strong>
+          </div>
+          <div style="font-size:12px; color:#94a3b8; line-height:1.8;">
+            ✅ 结构化输出（直接给 JSON）<br>
+            ✅ 适应不同截图格式，无需模板<br>
+            ✅ 准确率极高<br>
+            ⚠ 需 API Key，有调用费用<br>
+            ⚠ 图片数据上传到云端
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
